@@ -41,7 +41,7 @@
             <JsNavItem
               :item="{
                 label: 'Vue Docs',
-                linkExtNew: 'https://vuejs.org',
+                linkExt: 'https://vuejs.org',
                 tip: 'Opens in new tab',
                 tipPos: 't',
               }"
@@ -327,7 +327,7 @@
           <h3>Sub-Item: NavItemActions (External, Spinner, Check, Arrow, Dropdown, Kabob &amp; Custom Slot)</h3>
           <div class="pg-row">
             <JsNavItem
-              :item="{ label: 'External', linkExtNew: 'https://vuejs.org' }"
+              :item="{ label: 'External', linkExt: 'https://vuejs.org' }"
               theme="light"
             />
             <JsNavItem
@@ -697,7 +697,7 @@ export default {
             label: "More Options",
             items: [
               { label: "Nested Action A", onClick: () => {} },
-              { label: "External Guide", linkExtNew: "https://vuejs.org" },
+              { label: "External Guide", linkExt: "https://vuejs.org" },
             ],
           },
         ],
@@ -728,7 +728,7 @@ export default {
             id: "starred",
             label: "Starred",
             items: [
-              { label: "Component Guide bl[Docs]", linkExtNew: "https://vuejs.org" },
+              { label: "Component Guide bl[Docs]", linkExt: "https://vuejs.org" },
               { label: "Accessibility Checklist", icon: "check" },
             ],
           },

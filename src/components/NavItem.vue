@@ -32,8 +32,8 @@
       :tabindex="resolvedTag !== 'button' && isDisabled ? -1 : undefined"
       :href="resolvedHref"
       :to="resolvedTag === 'router-link' ? resolvedTo : undefined"
-      :target="isExternalNew ? '_blank' : undefined"
-      :rel="isExternalNew ? 'noopener noreferrer' : undefined"
+      :target="isExternal ? '_blank' : undefined"
+      :rel="isExternal ? 'noopener noreferrer' : undefined"
       :aria-current="isActive && resolvedTag !== 'button' ? 'page' : undefined"
       :aria-haspopup="hasDropdown ? 'menu' : undefined"
       :aria-expanded="hasDropdown ? String(dropdownOpen) : undefined"
@@ -396,11 +396,11 @@ export default {
     resolvedDropTheme() {
       return this.item.dropTheme || this.dropTheme || "dark";
     },
-    isExternalNew() {
-      return Boolean(this.item.linkExtNew || this.item.linkNew);
+    isExternal() {
+      return Boolean(this.item.linkExt);
     },
     externalHref() {
-      return this.item.linkExtNew || this.item.linkNew || this.item.linkExt || "";
+      return this.item.linkExt || "";
     },
     resolvedTo() {
       return this.item.link || this.item.route || "";
@@ -459,8 +459,7 @@ export default {
       if (this.item.actionIcon === false) return false;
       return Boolean(
         this.item.actionIcon ||
-          this.item.linkExtNew ||
-          this.item.linkNew ||
+          this.item.linkExt ||
           this.item.wait ||
           this.item.check ||
           this.item.arrow ||

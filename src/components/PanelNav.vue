@@ -250,7 +250,6 @@ export default {
         "route",
         "link",
         "linkExt",
-        "linkExtNew",
         "label",
         "subLabel",
         "tip",

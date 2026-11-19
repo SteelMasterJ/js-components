@@ -29,7 +29,7 @@ export default {
       const act = this.item.actionIcon;
       if (act === false) return "";
       if (typeof act === "string" && act.length > 0) return act;
-      if (this.item.linkExtNew || this.item.linkNew) return "external";
+      if (this.item.linkExt) return "external";
       if (this.item.wait) return "spinner";
       if (this.item.check) return "check";
       if (this.item.arrow) return "chevron-right";

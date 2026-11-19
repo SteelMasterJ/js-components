@@ -188,14 +188,15 @@ describe("JsNavItem", () => {
     expect(wrapper.emitted("click")).toHaveLength(1);
   });
 
-  it("renders external links with rel=noopener noreferrer and handles disabled links", () => {
+  it("renders external links with rel=noopener noreferrer, external icon, and handles disabled links", () => {
     const ext = mount(JsNavItem, {
-      props: { item: { label: "Docs", linkExtNew: "https://vuejs.org" } },
+      props: { item: { label: "Docs", linkExt: "https://vuejs.org" } },
     });
     const link = ext.find("a");
     expect(link.attributes("href")).toBe("https://vuejs.org");
     expect(link.attributes("target")).toBe("_blank");
     expect(link.attributes("rel")).toBe("noopener noreferrer");
+    expect(ext.find(".js-nav-item__action svg").exists()).toBe(true);
 
     const dis = mount(JsNavItem, {
       props: { item: { label: "Disabled Link", linkExt: "https://vuejs.org", disabled: true } },
