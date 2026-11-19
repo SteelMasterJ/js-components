@@ -208,7 +208,7 @@
 <script>
 import JsMarkdown from "./Markdown.vue";
 import JsBtnSplit from "./BtnSplit.vue";
-import JsPanelNavItem from "./PanelNavItem.vue";
+import JsPanelNavItem from "./NavItem.vue/index.js";
 
 export default {
   name: "JsPanelNav",

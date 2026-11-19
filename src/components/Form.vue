@@ -98,7 +98,7 @@
 <script>
 import JsMarkdown from "./Markdown.vue";
 import JsPanelNav from "./PanelNav.vue";
-import JsPanelNavItem from "./PanelNavItem.vue";
+import JsPanelNavItem from "./NavItem.vue/index.js";
 import JsInput from "./Input.vue";
 import JsInputRadio from "./InputRadio.vue";
 import JsInputCheckbox from "./InputCheckbox.vue";

@@ -1,13 +1,22 @@
 /**
- * Checks whether vue-router's RouterLink is registered in the current Vue app.
+ * Checks whether vue-router's RouterLink is registered in the current Vue app
+ * without triggering Vue 3's proxy warning when `$router` is not installed.
  * Allows components to render <router-link> when available and fall back
- * gracefully to <a> or <button> when vue-router is not installed.
+ * gracefully to <a> or <button> when vue-router is absent.
  *
  * @param {object} vm - Vue component instance (`this` in Options API)
  * @returns {boolean}
  */
 export function hasRouter(vm) {
-  return Boolean(vm && vm.$router);
+  if (!vm) return false;
+  const appCtx = vm.$?.appContext;
+  if (appCtx) {
+    return Boolean(
+      appCtx.components?.RouterLink ||
+        appCtx.config?.globalProperties?.$router
+    );
+  }
+  return Boolean(Object.prototype.hasOwnProperty.call(vm, "$router") && vm.$router);
 }
 
 /**

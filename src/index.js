@@ -1,13 +1,42 @@
 import "./styles/index.css";
 
 import JsIcon from "./components/Icon.vue";
+import JsMarkdown from "./components/Markdown.vue";
+import JsModal from "./components/Modal.vue";
+import JsTabs from "./components/Tabs.vue";
+import JsNavItem from "./components/NavItem.vue";
+import JsNavItemActions from "./components/NavItem/NavItemActions.vue";
+import JsNavItemIcon from "./components/NavItem/NavItemIcon.vue";
+import JsNavItemLabels from "./components/NavItem/NavItemLabels.vue";
+import JsNavItemNotify from "./components/NavItem/NavItemNotify.vue";
+import JsNavItemTags from "./components/NavItem/NavItemTags.vue";
 
 // Components are added here as each Step 2 batch is completed.
 const components = {
   JsIcon,
+  JsMarkdown,
+  JsModal,
+  JsTabs,
+  JsNavItem,
+  JsNavItemActions,
+  JsNavItemIcon,
+  JsNavItemLabels,
+  JsNavItemNotify,
+  JsNavItemTags,
 };
 
-export { JsIcon };
+export {
+  JsIcon,
+  JsMarkdown,
+  JsModal,
+  JsTabs,
+  JsNavItem,
+  JsNavItemActions,
+  JsNavItemIcon,
+  JsNavItemLabels,
+  JsNavItemNotify,
+  JsNavItemTags,
+};
 
 export default {
   install(app) {

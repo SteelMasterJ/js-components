@@ -1,34 +1,52 @@
 <template>
-  <i
-    v-if="action(item)"
-    :class="[
-      'icn act fa-' + action(item),
-      'fa-' + (item.actionFX || 'nofx'),
-      'fa-' + (item.actionIconVariant || 'solid'),
-      { 'fa-spin': action(item) === 'spinner' },
-    ]"
-  />
+  <span v-if="$slots.default || resolvedAction" class="js-nav-item-action">
+    <slot :action="resolvedAction">
+      <JsIcon
+        :name="resolvedAction"
+        :color="item.actionIconColor || ''"
+        :spin="resolvedAction === 'spinner'"
+      />
+    </slot>
+  </span>
 </template>
 
-<script setup>
-defineProps({
-  item: {
-    type: Object,
-    required: true,
-  },
-});
+<script>
+import JsIcon from "../Icon.vue";
 
-const action = (item) => {
-  //support older action props
-  let act = item.actionIcon;
-  if (act === false) return false;
-  if (typeof act === "string") return act;
-  if (item.linkExtNew) act = "external-link-square-alt";
-  if (item.wait) act = "spinner";
-  if (item.check) act = "check";
-  if (item.arrow) act = "angle-right";
-  if (item.items) act = "caret-down";
-  if (item.kabob) act = "ellipsis-vertical";
-  return act;
+export default {
+  name: "JsNavItemActions",
+  components: {
+    JsIcon,
+  },
+  props: {
+    item: {
+      type: Object,
+      required: true,
+    },
+  },
+  computed: {
+    resolvedAction() {
+      const act = this.item.actionIcon;
+      if (act === false) return "";
+      if (typeof act === "string" && act.length > 0) return act;
+      if (this.item.linkExtNew || this.item.linkNew) return "external";
+      if (this.item.wait) return "spinner";
+      if (this.item.check) return "check";
+      if (this.item.arrow) return "chevron-right";
+      if (this.item.items && this.item.items.length) return "caret-down";
+      if (this.item.kabob) return "ellipsis-vertical";
+      return "";
+    },
+  },
 };
 </script>
+
+<style scoped>
+.js-nav-item-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.9em;
+}
+</style>

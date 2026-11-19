@@ -146,7 +146,7 @@
 
 <script>
 import JsMarkdown from "./Markdown.vue";
-import JsPanelNavItem from "./PanelNavItem.vue";
+import JsPanelNavItem from "./NavItem.vue/index.js";
 import JsNavList from "./NavList.vue";
 
 export default {

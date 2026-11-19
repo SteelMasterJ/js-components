@@ -28,7 +28,7 @@
 </template>
 
 <script>
-import JsPanelNavItem from "./PanelNavItem.vue";
+import JsPanelNavItem from "./NavItem.vue/index.js";
 
 export default {
   name: "JsBtnSplit",

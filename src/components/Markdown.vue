@@ -1,130 +1,158 @@
 <template>
-  <span>
-    <span
-      v-if="parse"
-      :title="stripMarkDown(val)"
-      class="js-md"
-      v-html="parseMarkDown(val)"
-    ></span>
-    <span v-else class="js-md">{{ val }}</span>
-  </span>
+  <span
+    v-if="shouldParse"
+    class="js-md"
+    :title="showTitle ? plainText : undefined"
+    :data-test-id="textTestId || undefined"
+    v-html="parsedHtml"
+  ></span>
+  <span
+    v-else
+    class="js-md"
+    :data-test-id="textTestId || undefined"
+  >{{ val }}</span>
 </template>
+
 <script>
+import { escapeHtml, isSafeUrl } from "../utils/sanitize.js";
+
+const VALID_TAG_COLORS = new Set([
+  "bl",
+  "db",
+  "lb",
+  "lt",
+  "wh",
+  "dk",
+  "yw",
+  "or",
+  "pu",
+  "gn",
+  "rd",
+]);
+
 export default {
   name: "JsMarkdown",
   props: {
-    val: String,
-    parse: Array,
+    val: {
+      type: String,
+      default: "",
+    },
+    parse: {
+      type: [Boolean, Array, String],
+      default: false,
+    },
+    showTitle: {
+      type: Boolean,
+      default: false,
+    },
+    textTestId: {
+      type: String,
+      default: "",
+    },
+  },
+  computed: {
+    shouldParse() {
+      if (Array.isArray(this.parse)) {
+        return this.parse.length > 0;
+      }
+      return Boolean(this.parse);
+    },
+    parsedHtml() {
+      return this.parseMarkdown(this.val);
+    },
+    plainText() {
+      return this.stripMarkdown(this.val);
+    },
   },
   methods: {
-    parseMarkDown(val) {
-      // some simple rich text processing
-      // Tags.... b[test] .... b=blue, l|w=white
-      val = ` ${val} `;
-      return val
-        .replace(
-          /(?:\s\/)([^\/<\n]+)(?:\/\s)/g,
-          ' <i class="icn fas fa-$1"></i> '
-        )
-        .replace(/(?:\*)([^*<\n]+)(?:\*)/g, "<strong>$1</strong>")
-        .replace(/(?:_)([^_<\n]+)(?:_)/g, "<i>$1</i>")
-        .replace(
-          /\s\[([\w\s\d]+)\]\((https?:\/\/[\w\d./?=#]+)\)\s$/gm,
-          ' <a target="_blank" href="$2">$1</a> '
-        )
-        .replace(
-          /(\s(..)\[)([^[<\n]+)(?:\]\s)/gi,
-          ' <span class="tag tag-$2">$3</span> '
-        )
-        .replace(
-          /(\s(..)\[)([^[<\n]+)(?:\]\s)/gi,
-          ' <span class="tag tag-$2">$3</span> '
-        )
-        .replace(/(?:\[)([^[<\n]+)(?:\])/g, ' <span class="tag">$1</span> ')
-        .replace(
-          /(\b(?:https?:\/\/)(?:(?:[a-z,-]+\.)+)[^\s,]+\b)/g,
-          ' <a target="_blank" href="$1">$1</a> '
-        )
-        .replace(
-          /(\b(?:(?:[a-z,-]+\.)+)[^\s,]+\b)/g,
-          ' <a target="_blank" href="https://$1">$1</a> '
-        )
-        .replace(
-          /^\[([\w\s\d]+)\]\((https?:\/\/[\w\d./?=#]+)\)$/gm,
-          ' <a target="_blank" href="$2">$1</a> '
-        );
+    parseMarkdown(raw) {
+      if (!raw) return "";
+      let output = escapeHtml(raw);
+
+      // Markdown links: [Label](https://example.com)
+      output = output.replace(
+        /\[([^\]]+)\]\(([^)\s]+)\)/g,
+        (_, label, url) => {
+          if (!isSafeUrl(url)) return label;
+          return `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+        }
+      );
+
+      // Bold: **text** or *text*
+      output = output.replace(/\*\*([^*<\n]+)\*\*/g, "<strong>$1</strong>");
+      output = output.replace(/(?<!\*)\*([^*<\n]+)\*(?!\*)/g, "<strong>$1</strong>");
+
+      // Italic: _text_ (semantic <em>)
+      output = output.replace(/(^|\s)_([^_<\n]+)_(?=\s|$|[.,!?;:])/g, "$1<em>$2</em>");
+
+      // Colored tags: bl[Info], gn[Active], rd[Alert], etc.
+      output = output.replace(
+        /(^|\s)([a-z]{2})\[([^[\]<\n]+)\](?=\s|$|[.,!?;:])/gi,
+        (match, lead, code, text) => {
+          const key = code.toLowerCase();
+          if (!VALID_TAG_COLORS.has(key)) return match;
+          return `${lead}<span class="js-tag js-tag--${key}">${text}</span>`;
+        }
+      );
+
+      // Default tags: [Tag]
+      output = output.replace(
+        /(^|\s)\[([^[\]<\n]+)\](?=\s|$|[.,!?;:])/g,
+        '$1<span class="js-tag">$2</span>'
+      );
+
+      // Standalone safe URLs (not already inside an href="...")
+      output = output.replace(
+        /(^|\s)(https?:\/\/[^\s<]+)/g,
+        (match, lead, url) => {
+          if (!isSafeUrl(url)) return match;
+          return `${lead}<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+        }
+      );
+
+      return output;
     },
-    stripMarkDown(val) {
-      val = ` ${val} `;
-      return val
-        .replace(/(?:\s\/)([^/<\n]+)(?:\/\s)/g, "")
-        .replace(/(?:\*)([^*<\n]+)(?:\*)/g, "$1")
-        .replace(/(?:_)([^_<\n]+)(?:_)/g, "$1");
+    stripMarkdown(raw) {
+      if (!raw) return "";
+      return String(raw)
+        .replace(/\[([^\]]+)\]\([^)\s]+\)/g, "$1")
+        .replace(/\*\*([^*<\n]+)\*\*/g, "$1")
+        .replace(/\*([^*<\n]+)\*/g, "$1")
+        .replace(/(^|\s)_([^_<\n]+)_(?=\s|$|[.,!?;:])/g, "$1$2")
+        .replace(/(^|\s)[a-z]{2}\[([^[\]<\n]+)\]/gi, "$1$2")
+        .replace(/\[([^[\]<\n]+)\]/g, "$1")
+        .trim();
     },
   },
 };
 </script>
-<style lang="scss">
+
+<style scoped>
 .js-md {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  strong {
-    font-weight: bolder;
-  }
-  a {
-    text-decoration: none;
-    color: #5bcefd;
-  }
-  .tag {
-    font-size: 0.8em;
-    padding: 0 0.35em;
-    border-radius: 0.25em;
-    display: inline-block;
-    margin-bottom: 0.15em;
-    vertical-align: middle;
-    line-height: normal;
-    white-space: nowrap;
-    &.tag-bl {
-      color: #fff !important;
-      background: #2783a8 !important;
-    }
-    &.tag-db {
-      color: #fff !important;
-      background: #1b5c75 !important;
-    }
-    &.tag-lb {
-      color: #1b5c75 !important;
-      background: #e1effc !important;
-    }
-    &.tag-lt,
-    &.tag-wh {
-      color: #222 !important;
-      background: #fff !important;
-    }
-    &.tag-dk {
-      color: #fff !important;
-      background: #222 !important;
-    }
-    &.tag-yw {
-      color: #444 !important;
-      background: rgb(238, 206, 26) !important;
-    }
-    &.tag-or {
-      color: #fff !important;
-      background: #ed9137 !important;
-    }
-    &.tag-pu {
-      color: #fff !important;
-      background: #974bb7 !important;
-    }
-    &.tag-gn {
-      color: #fff !important;
-      background: #41b445 !important;
-    }
-    &.tag-rd {
-      color: #fff !important;
-      background: #d81f1f !important;
-    }
-  }
+  overflow-wrap: anywhere;
+}
+
+.js-md :deep(strong) {
+  font-weight: 700;
+}
+
+.js-md :deep(em) {
+  font-style: italic;
+}
+
+.js-md :deep(a) {
+  color: var(--js-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.js-md :deep(a:hover) {
+  color: var(--js-color-primary-hover);
+}
+
+.js-md :deep(a:focus-visible) {
+  outline: var(--js-focus-ring);
+  outline-offset: var(--js-focus-offset);
+  border-radius: 2px;
 }
 </style>
