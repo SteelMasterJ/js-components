@@ -1,0 +1,58 @@
+{
+  "name": "js-components",
+  "version": "0.1.0",
+  "description": "Lightweight, WCAG 2.1 AA accessible, responsive Vue 3 component library.",
+  "type": "module",
+  "main": "./dist/js-components.cjs",
+  "module": "./dist/js-components.js",
+  "exports": {
+    ".": {
+      "import": "./dist/js-components.js",
+      "require": "./dist/js-components.cjs"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "vue",
+    "vue3",
+    "components",
+    "ui",
+    "accessible",
+    "wcag",
+    "responsive",
+    "lightweight"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "vue": "^3.3.0",
+    "vue-router": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vue-router": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.0",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^26.0.0",
+    "vite": "^6.0.0",
+    "vitest": "^3.0.0",
+    "vue": "^3.5.0"
+  }
+}

@@ -1,0 +1,116 @@
+/* Visually hidden helper for screen readers (WCAG) */
+.js-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Vanilla SVG icon normalization — easy to style from any host app */
+.js-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.js-icon > svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+  display: block;
+}
+
+.js-icon--spin > svg {
+  animation: js-spin 1s linear infinite;
+}
+
+@keyframes js-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Shared accessible inline tags (used by JsMarkdown, JsNavItemTags, etc.) */
+.js-tag {
+  display: inline-block;
+  font-size: 0.8em;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 0.1em 0.45em;
+  border-radius: var(--js-radius-sm);
+  vertical-align: middle;
+  white-space: nowrap;
+  background-color: var(--js-color-surface-dark);
+  color: var(--js-color-text-inverse);
+}
+
+.js-tag--bl {
+  background-color: var(--js-color-primary);
+  color: var(--js-color-primary-text);
+}
+
+.js-tag--db {
+  background-color: var(--js-color-primary-hover);
+  color: var(--js-color-primary-text);
+}
+
+.js-tag--lb {
+  background-color: var(--js-color-primary-soft);
+  color: var(--js-color-primary-hover);
+}
+
+.js-tag--lt,
+.js-tag--wh {
+  background-color: var(--js-color-surface);
+  color: var(--js-color-text);
+  box-shadow: inset 0 0 0 1px var(--js-color-border);
+}
+
+.js-tag--dk {
+  background-color: var(--js-color-surface-dark);
+  color: var(--js-color-text-inverse);
+}
+
+.js-tag--yw {
+  background-color: var(--js-color-warning);
+  color: var(--js-color-warning-text);
+}
+
+.js-tag--or {
+  background-color: var(--js-color-orange);
+  color: var(--js-color-text-inverse);
+}
+
+.js-tag--pu {
+  background-color: var(--js-color-purple);
+  color: var(--js-color-text-inverse);
+}
+
+.js-tag--gn {
+  background-color: var(--js-color-success);
+  color: var(--js-color-text-inverse);
+}
+
+.js-tag--rd {
+  background-color: var(--js-color-danger);
+  color: var(--js-color-text-inverse);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js-icon--spin > svg {
+    animation: none;
+  }
+}

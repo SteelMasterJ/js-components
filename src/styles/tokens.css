@@ -1,0 +1,96 @@
+:root {
+  /* Palette (WCAG 2.1 AA contrast compliant >= 4.5:1) */
+  --js-color-primary: #1d6f90;
+  --js-color-primary-hover: #14526b;
+  --js-color-primary-soft: #e6f3f8;
+  --js-color-primary-text: #ffffff;
+
+  --js-color-surface: #ffffff;
+  --js-color-surface-alt: #f5f7f9;
+  --js-color-surface-hover: #e9eff4;
+  --js-color-surface-dark: #25282c;
+  --js-color-surface-dark-hover: #363b42;
+
+  --js-color-text: #1f2933;
+  --js-color-text-muted: #52606d;
+  --js-color-text-inverse: #ffffff;
+  --js-color-text-inverse-muted: #d1d9e0;
+
+  --js-color-border: #d0d7de;
+  --js-color-border-strong: #8c959f;
+  --js-color-divider: rgba(31, 41, 51, 0.14);
+  --js-color-divider-dark: rgba(255, 255, 255, 0.16);
+
+  /* Semantic / Status Colors (AA contrast with white text unless noted) */
+  --js-color-success: #1e7e34;
+  --js-color-success-hover: #155d27;
+  --js-color-warning: #f5c518;
+  --js-color-warning-text: #1f2933;
+  --js-color-orange: #b85600;
+  --js-color-orange-hover: #8f4200;
+  --js-color-danger: #c5221f;
+  --js-color-danger-hover: #961a18;
+  --js-color-purple: #7b3896;
+  --js-color-purple-hover: #5c2871;
+  --js-color-disabled-bg: #e4e7eb;
+  --js-color-disabled-text: #52606d;
+
+  /* Focus Ring */
+  --js-color-focus: #005fcc;
+  --js-focus-ring: 2px solid var(--js-color-focus);
+  --js-focus-offset: 2px;
+
+  /* Typography */
+  --js-font-family: inherit;
+  --js-font-size-xs: 0.75rem;
+  --js-font-size-sm: 0.875rem;
+  --js-font-size-md: 1rem;
+  --js-font-size-lg: 1.125rem;
+  --js-font-size-xl: 1.375rem;
+  --js-line-height: 1.45;
+
+  /* Spacing */
+  --js-space-1: 0.25rem;
+  --js-space-2: 0.5rem;
+  --js-space-3: 0.75rem;
+  --js-space-4: 1rem;
+  --js-space-5: 1.5rem;
+  --js-space-6: 2rem;
+
+  /* Radii */
+  --js-radius-sm: 0.25rem;
+  --js-radius-md: 0.5rem;
+  --js-radius-lg: 0.875rem;
+  --js-radius-pill: 9999px;
+
+  /* Shadows */
+  --js-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --js-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.14);
+  --js-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.22);
+
+  /* Z-index layers */
+  --js-z-sticky: 10;
+  --js-z-dropdown: 100;
+  --js-z-tooltip: 200;
+  --js-z-modal: 1000;
+
+  /* Motion */
+  --js-transition-fast: 150ms ease;
+  --js-transition-base: 220ms ease;
+
+  /* Accessible touch target baseline */
+  --js-touch-min: 2.25rem;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --js-touch-min: 2.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --js-transition-fast: 0ms;
+    --js-transition-base: 0ms;
+  }
+}
