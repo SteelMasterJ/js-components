@@ -1,47 +1,57 @@
 <template>
-  <div :class="['drop-nav', 'drop-nav-' + theme]">
-    <div v-if="0 && scroll" class="scroll" />
-    <ul :class="['drop-nav-items', { 'drop-nav-items-scroll': scroll }]">
-      <li v-for="(subItem, i) in items" :key="subItem.id || i">
-        <div class="hdr" v-if="subItem.header">
+  <div :class="['js-nav-list', 'js-nav-list--' + theme]">
+    <ul
+      :class="['js-nav-list__items', { 'js-nav-list__items--scroll': shouldScroll }]"
+      :role="menu ? 'menu' : undefined"
+      :aria-label="ariaLabel || undefined"
+    >
+      <li
+        v-for="(subItem, i) in items"
+        :key="subItem.id != null ? subItem.id : i"
+        :role="itemRole(subItem)"
+        class="js-nav-list__entry"
+      >
+        <div v-if="subItem.header" class="js-nav-list__header">
           <JsMarkdown
-            :parse="parseMarkdown.match(/header|\*/)"
+            :parse="shouldParseHeader(subItem)"
             :val="subItem.label"
           />
         </div>
-        <div class="divider" v-else-if="subItem.divider"></div>
-        <div v-else-if="subItem.component">
+
+        <hr v-else-if="subItem.divider" class="js-nav-list__divider" />
+
+        <div v-else-if="subItem.component" class="js-nav-list__custom">
           <component :is="subItem.component" v-bind="subItem.props || {}" />
         </div>
 
         <JsBtnSplit
-          v-else-if="subItem.split && subItem.items"
+          v-else-if="subItem.split && Array.isArray(subItem.items)"
           :items="subItem.items"
-          theme="light-text"
+          :theme="theme === 'dark' ? 'light-text' : 'dark-text'"
           :size="subItem.size || size"
           :grow="subItem.grow || 'all'"
-          :spaced="subItem.spaced"
-          :dropRight="subItem.dropRight"
-          :dropSize="subItem.dropSize || dropSize"
-          :parseMarkdown="subItem.parseMarkdown || parseMarkdown"
+          :spaced="Boolean(subItem.spaced)"
+          :drop-right="Boolean(subItem.dropRight)"
+          :drop-size="subItem.dropSize || dropSize || 'auto'"
+          :drop-theme="theme"
+          :parse-markdown="subItem.parseMarkdown || parseMarkdown"
+          @click="onSelect"
         />
-        <JsPanelNavItem
-          :class="['test', { 'list-thumb': subItem.thumb }]"
-          v-else
-          :child="true"
-          :size="subItem.size || size"
-          :dropSize="subItem.dropSize || dropSize"
-          :dropTheme="theme"
-          :parseMarkdown="subItem.parseMarkdown || parseMarkdown"
-          :item="{
-            ...subItem,
-            actionIcon:
-              subItem.items && !subItem.actionIcon
-                ? 'caret-right'
-                : subItem.actionIcon,
-          }"
-          :theme="theme === 'dark' ? 'light-text' : 'dark-text'"
-        />
+
+        <slot v-else name="item" :item="subItem" :index="i">
+          <JsNavItem
+            :class="{ 'js-nav-list__thumb': Boolean(subItem.thumb) }"
+            :child="true"
+            :block="true"
+            :size="subItem.size || size"
+            :drop-size="subItem.dropSize || dropSize || 'auto'"
+            :drop-theme="theme"
+            :parse-markdown="subItem.parseMarkdown || parseMarkdown"
+            :item="normalizeItem(subItem)"
+            :theme="subItem.theme || (theme === 'dark' ? 'light-text' : 'dark-text')"
+            @click="onSelect"
+          />
+        </slot>
       </li>
     </ul>
   </div>
@@ -49,27 +59,34 @@
 
 <script>
 import JsMarkdown from "./Markdown.vue";
+import JsNavItem from "./NavItem.vue";
+import JsBtnSplit from "./BtnSplit.vue";
 
 export default {
   name: "JsNavList",
   components: {
     JsMarkdown,
-    JsBtnSplit: () => import("./BtnSplit.vue"),
-    JsPanelNavItem: () => import("./PanelNavItem.vue"),
-  },
-  data() {
-    return {};
+    JsNavItem,
+    JsBtnSplit,
   },
   props: {
-    items: Array,
+    items: {
+      type: Array,
+      default: () => [],
+    },
     size: {
       type: String,
       default: "md",
+      validator(v) {
+        return ["xs", "sm", "md", "lg", "xl"].includes(v);
+      },
     },
-    closeOnClick: Boolean,
-    dropSize: String,
-    parseMarkdown: {
+    dropSize: {
       type: String,
+      default: "auto",
+    },
+    parseMarkdown: {
+      type: [Boolean, String],
       default: "",
     },
     theme: {
@@ -79,95 +96,132 @@ export default {
         return ["light", "dark"].includes(v);
       },
     },
-    spaced: Boolean,
+    menu: {
+      type: Boolean,
+      default: false,
+    },
+    scrollable: {
+      type: Boolean,
+      default: true,
+    },
+    ariaLabel: {
+      type: String,
+      default: "",
+    },
   },
+  emits: ["select", "click"],
   computed: {
-    scroll() {
-      // const haveSubItems = (item) => ((item.split || item.dropTabs) && item.items) && !item.items.items;
-      const noSubItems = (item) => !item.items;
-      // const splitItems = items.split && item.items.items;
-      // const tabItems = items.tabs && item.items.items;
-      // const haveSubItems = (item) =>
-      //   (item.split && item.items.items) ||
-      //   (item.dropTabs && item.items.items) ||
-      //   item.items.items;
-      return this.items.every(noSubItems);
+    hasNestedItems() {
+      return this.items.some(
+        (item) => Array.isArray(item.items) && item.items.length > 0 && !item.split
+      );
+    },
+    shouldScroll() {
+      return this.scrollable && !this.hasNestedItems;
+    },
+  },
+  methods: {
+    itemRole(subItem) {
+      if (!this.menu) return undefined;
+      if (subItem.divider) return "separator";
+      if (subItem.header) return "presentation";
+      return "none";
+    },
+    shouldParseHeader(subItem) {
+      const pm =
+        subItem.parseMarkdown !== undefined
+          ? subItem.parseMarkdown
+          : this.parseMarkdown;
+      if (typeof pm === "boolean") return pm;
+      return Boolean(String(pm || "").match(/header|\*/));
+    },
+    normalizeItem(subItem) {
+      if (
+        Array.isArray(subItem.items) &&
+        subItem.items.length > 0 &&
+        subItem.actionIcon === undefined
+      ) {
+        return { ...subItem, actionIcon: "caret-right" };
+      }
+      return subItem;
+    },
+    onSelect(event, item) {
+      this.$emit("click", event, item);
+      this.$emit("select", item, event);
     },
   },
 };
 </script>
-<style lang="scss">
-.drop-nav {
-  transition: all 0.35s;
-  .scroll {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 5px;
-    height: 5px;
-    background: red;
-  }
-  .drop-nav-items {
-    width: 100%;
-    // overflow-y: auto;
-    // overflow-x: hidden;
-    // max-height: 25em;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    &.drop-nav-items-scroll {
-      // max-height: unset;
-      // overflow: visible;
-      overflow-y: auto;
-      overflow-x: hidden;
-      max-height: 20em;
-    }
-    .hdr {
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 0.85em;
-      font-weight: 500;
-      padding: 0.35em 0.5em;
-      margin-bottom: 0.15em;
-      a {
-        color: #a4d5ff;
-        text-decoration: none;
-      }
-      .tag {
-        color: #222;
-        background: #fff;
-      }
-    }
-    .divider {
-      height: 1px;
-      margin: 0.35em -0.6em;
-      overflow: hidden;
-      background-color: rgba(0, 0, 0, 0.4);
-    }
-    li {
-      position: relative;
-    }
-    li:nth-child(n + 2) > .hdr {
-      margin-top: 0.5em;
-    }
-    .list-thumb .thumb {
-      width: 100%;
-    }
-  }
-  &.drop-nav-light {
-    .hdr {
-      color: rgba(0, 0, 0, 0.8);
-    }
-    .divider {
-      background-color: rgba(0, 0, 0, 0.2);
-    }
-  }
-  &.drop-nav-dark {
-    .hdr {
-      color: rgba(255, 255, 255, 0.9);
-    }
-    .divider {
-      background-color: rgba(0, 0, 0, 0.4);
-    }
-  }
+
+<style scoped>
+.js-nav-list {
+  font-family: var(--js-font-family);
+  min-width: 0;
+}
+
+.js-nav-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.js-nav-list__items--scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 20rem;
+}
+
+.js-nav-list__entry {
+  position: relative;
+}
+
+.js-nav-list__header {
+  font-size: var(--js-font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.4rem 0.65rem 0.2rem;
+}
+
+.js-nav-list__entry:nth-child(n + 2) > .js-nav-list__header {
+  margin-top: 0.35rem;
+}
+
+.js-nav-list__divider {
+  border: 0;
+  height: 1px;
+  margin: 0.35rem 0;
+}
+
+.js-nav-list__custom {
+  padding: 0.25rem 0.5rem;
+}
+
+.js-nav-list--light {
+  color: var(--js-color-text);
+}
+
+.js-nav-list--light .js-nav-list__header {
+  color: var(--js-color-text-muted);
+}
+
+.js-nav-list--light .js-nav-list__divider {
+  background-color: var(--js-color-divider);
+}
+
+.js-nav-list--dark {
+  color: var(--js-color-text-inverse);
+}
+
+.js-nav-list--dark .js-nav-list__header {
+  color: var(--js-color-text-inverse-muted);
+}
+
+.js-nav-list--dark .js-nav-list__divider {
+  background-color: var(--js-color-divider-dark);
 }
 </style>

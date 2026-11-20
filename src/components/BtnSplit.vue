@@ -1,45 +1,51 @@
 <template>
   <div
     :class="[
-      'btn-split',
-      'btn-split-grow-' + grow,
-      { 'btn-split-spaced': spaced },
+      'js-btn-split',
+      'js-btn-split--grow-' + grow,
+      { 'js-btn-split--spaced': spaced },
     ]"
     role="group"
-    :aria-label="`${items.length} Button(s)`"
+    :aria-label="resolvedAriaLabel"
   >
-    <JsPanelNavItem
+    <JsNavItem
       v-for="(item, i) in items"
-      :key="item.id || i"
-      class="btn-split-btn"
+      :key="item.id != null ? item.id : i"
+      class="js-btn-split__item"
       :item="item"
       :theme="item.theme || theme"
-      :circle="item.circle || circle"
-      :thumb="item.thumb || thumb"
+      :circle="Boolean(item.circle || circle)"
+      :thumb="Boolean(item.thumb || thumb)"
       :size="item.size || size"
-      :dropRight="item.dropRight || dropRight"
-      :dropTabs="item.dropTabs"
-      :dropTabSelected="item.dropTabSelected"
-      :dropSize="item.dropSize || dropSize"
-      :dropTheme="item.dropTheme"
-      :parseMarkdown="item.parseMarkdown || parseMarkdown"
+      :drop-right="item.dropRight !== undefined ? item.dropRight : dropRight"
+      :drop-tabs="Boolean(item.dropTabs)"
+      :drop-tab-selected="item.dropTabSelected ?? 0"
+      :drop-size="item.dropSize || dropSize"
+      :drop-theme="item.dropTheme || dropTheme"
+      :parse-markdown="item.parseMarkdown || parseMarkdown"
+      @click="(event, payload) => $emit('click', event, payload)"
+      @toggle="(open) => $emit('toggle', open, item)"
     />
   </div>
 </template>
 
 <script>
-import JsPanelNavItem from "./NavItem.vue/index.js";
+import JsNavItem from "./NavItem.vue";
 
 export default {
   name: "JsBtnSplit",
   components: {
-    JsPanelNavItem,
-  },
-  data() {
-    return {};
+    JsNavItem,
   },
   props: {
-    items: Array,
+    items: {
+      type: Array,
+      default: () => [],
+    },
+    ariaLabel: {
+      type: String,
+      default: "",
+    },
     size: {
       type: String,
       default: "md",
@@ -62,18 +68,37 @@ export default {
       },
     },
     parseMarkdown: {
-      type: String,
+      type: [Boolean, String],
       default: "",
     },
-    circle: Boolean,
-    thumb: Boolean,
-    spaced: Boolean,
-    theme: String,
+    circle: {
+      type: Boolean,
+      default: false,
+    },
+    thumb: {
+      type: Boolean,
+      default: false,
+    },
+    spaced: {
+      type: Boolean,
+      default: false,
+    },
+    theme: {
+      type: String,
+      default: "light",
+    },
     dropSize: {
       type: String,
       default: "auto",
       validator(value) {
-        return ["auto", "sm", "md", "lg"].includes(value);
+        return ["auto", "sm", "md", "lg", "min"].includes(value);
+      },
+    },
+    dropTheme: {
+      type: String,
+      default: "dark",
+      validator(value) {
+        return ["light", "dark"].includes(value);
       },
     },
     dropRight: {
@@ -81,106 +106,109 @@ export default {
       default: true,
     },
   },
-  computed: {},
-  methods: {},
+  emits: ["click", "toggle"],
+  computed: {
+    resolvedAriaLabel() {
+      if (this.ariaLabel) return this.ariaLabel;
+      const count = this.items.length;
+      return `${count} ${count === 1 ? "action" : "actions"}`;
+    },
+  },
 };
 </script>
-<style lang="scss">
-.btn-split {
-  position: relative;
-  display: flex;
-  align-items: stretch;
-  /* gap: 1px; */
-  min-width: 0;
-  justify-content: center;
-  .btn-split-btn {
-    display: flex;
-    &:not(:first-child):not(:last-child) {
-      > .item {
-        border-radius: 0 !important;
-      }
-    }
-    &:first-child > .item {
-      /* border-radius: 1em 0 0 1em !important; */
-      border-top-right-radius: 0 !important;
-      border-bottom-right-radius: 0 !important;
-    }
-    &:last-child > .item {
-      /* border-radius: 0 1em 1em 0 !important; */
-      border-top-left-radius: 0 !important;
-      border-bottom-left-radius: 0 !important;
-    }
-    .drop {
-      left: 0;
-      top: 100%;
-    }
-    .drop-right {
-      left: unset;
-      right: 0;
-    }
-  }
 
-  &.btn-split-grow-first,
-  &.btn-split-grow-first-hover {
-    .btn-split-btn:first-child {
-      flex: 1;
-      > .item {
-        flex: 1;
-      }
-    }
-  }
-  &.btn-split-grow-first-hover-1
-    .btn-split-btn.panel-nav-item-light:first-child {
-    &:hover {
-      + .btn-split-btn > .item {
-        background: #e1effc;
-      }
-    }
-  }
-  &.btn-split-grow-first-hover .btn-split-btn.panel-nav-item-light:first-child {
-    &:hover {
-      + .btn-split-btn > .item,
-      + .btn-split-btn + .btn-split-btn > .item,
-      + .btn-split-btn + .btn-split-btn + .btn-split-btn > .item {
-        background: #e1effc;
-      }
-    }
-  }
-  &.btn-split-grow-first-hover
-    .btn-split-btn.panel-nav-item-light-text:first-child {
-    &:hover {
-      + .btn-split-btn > .item,
-      + .btn-split-btn + .btn-split-btn > .item,
-      + .btn-split-btn + .btn-split-btn + .btn-split-btn > .item {
-        background: rgba(0, 0, 0, 0.5);
-      }
-    }
-  }
-  &.btn-split-grow-last .btn-split-btn:last-child {
-    flex: 1;
-    > .item {
-      flex: 1;
-    }
-  }
-  &.btn-split-grow-all .btn-split-btn {
-    flex: 1;
-    > .item {
-      flex: 1;
-      justify-content: center;
-      .labels {
-        flex: unset;
-      }
-    }
-  }
-  &.btn-split-spaced {
-    justify-content: space-between;
-    .btn-split-btn {
-      flex: unset;
-      > .item {
-        flex: unset;
-        border-radius: 1em !important;
-      }
-    }
+<style scoped>
+.js-btn-split {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  justify-content: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: 1px;
+}
+
+.js-btn-split__item {
+  display: flex;
+}
+
+/* Connected pill segments — direct child `>` keeps nested dropdown items untouched */
+.js-btn-split:not(.js-btn-split--spaced)
+  > .js-btn-split__item:not(:first-child):not(:last-child)
+  > :deep(.js-nav-item__trigger) {
+  border-radius: 0;
+}
+
+.js-btn-split:not(.js-btn-split--spaced)
+  > .js-btn-split__item:first-child:not(:last-child)
+  > :deep(.js-nav-item__trigger) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.js-btn-split:not(.js-btn-split--spaced)
+  > .js-btn-split__item:last-child:not(:first-child)
+  > :deep(.js-nav-item__trigger) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* Grow modes */
+.js-btn-split--grow-first,
+.js-btn-split--grow-first-hover,
+.js-btn-split--grow-first-hover-1,
+.js-btn-split--grow-last,
+.js-btn-split--grow-all {
+  display: flex;
+  width: 100%;
+}
+
+.js-btn-split--grow-first > .js-btn-split__item:first-child,
+.js-btn-split--grow-first-hover > .js-btn-split__item:first-child,
+.js-btn-split--grow-first-hover-1 > .js-btn-split__item:first-child {
+  flex: 1 1 auto;
+}
+
+.js-btn-split--grow-last > .js-btn-split__item:last-child {
+  flex: 1 1 auto;
+}
+
+.js-btn-split--grow-all > .js-btn-split__item {
+  flex: 1 1 0;
+}
+
+.js-btn-split--grow-all > .js-btn-split__item > :deep(.js-nav-item__trigger) {
+  justify-content: center;
+}
+
+.js-btn-split--grow-all
+  > .js-btn-split__item
+  > :deep(.js-nav-item__trigger > .js-nav-item__labels) {
+  flex: 0 1 auto;
+}
+
+/* Hover cascade for first-hover variants */
+.js-btn-split--grow-first-hover-1
+  > .js-btn-split__item:first-child:hover
+  + .js-btn-split__item
+  > :deep(.js-nav-item__trigger),
+.js-btn-split--grow-first-hover
+  > .js-btn-split__item:first-child:hover
+  ~ .js-btn-split__item
+  > :deep(.js-nav-item__trigger) {
+  background-color: var(--js-color-primary-soft);
+}
+
+/* Spaced pill mode */
+.js-btn-split--spaced {
+  justify-content: space-between;
+  gap: var(--js-space-2);
+}
+
+@media (max-width: 480px) {
+  .js-btn-split {
+    flex-wrap: wrap;
+    row-gap: var(--js-space-1);
   }
 }
 </style>

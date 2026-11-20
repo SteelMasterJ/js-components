@@ -3,8 +3,8 @@
     <header class="pg-header">
       <h1>js-components Playground</h1>
       <p>
-        Batch 2A Showcase — Vue 3 Options API, semantic HTML, WCAG 2.1 AA,
-        vanilla CSS, and slotted SVG icons.
+        Batches 2A &amp; 2B Showcase — Vue 3 Options API, semantic HTML, WCAG
+        2.1 AA, vanilla CSS, and slotted SVG icons.
       </p>
     </header>
 
@@ -373,10 +373,256 @@
       </div>
     </section>
 
-    <!-- 2. JsModal -->
+    <!-- 2. JsBtnSplit (Batch 2B) -->
+    <section class="pg-section" aria-labelledby="btnsplit-heading">
+      <h2 id="btnsplit-heading">
+        2. JsBtnSplit (Split Button Groups — Grow Modes, Spaced Pills, Sizes &amp; Dropdowns)
+      </h2>
+      <div class="pg-stack">
+        <div class="pg-card">
+          <h3>Connected Split Button with Action Dropdown &amp; Sizes (sm, md, lg)</h3>
+          <div class="pg-row">
+            <JsBtnSplit
+              size="sm"
+              theme="blue"
+              aria-label="Publish actions small"
+              :items="splitPublishItems"
+              @click="onNavClick"
+            />
+            <JsBtnSplit
+              size="md"
+              theme="lightblue"
+              aria-label="Publish actions medium"
+              :items="splitPublishItems"
+              @click="onNavClick"
+            />
+            <JsBtnSplit
+              size="lg"
+              theme="green"
+              aria-label="Publish actions large"
+              :items="splitPublishItems"
+              @click="onNavClick"
+            />
+          </div>
+        </div>
+
+        <div class="pg-card">
+          <h3>Grow Modes (grow="first", grow="first-hover", grow="last", grow="all")</h3>
+          <div class="pg-stack">
+            <JsBtnSplit
+              grow="first"
+              theme="light"
+              aria-label="Grow first group"
+              :items="[
+                { label: 'Primary (grow=first)', icon: 'check', button: 'button' },
+                { label: 'Edit', button: 'button' },
+                { icon: 'ellipsis-vertical', tip: 'More', items: [{ label: 'Archive' }, { label: 'Delete' }] },
+              ]"
+              @click="onNavClick"
+            />
+            <JsBtnSplit
+              grow="first-hover"
+              theme="light"
+              aria-label="Grow first-hover group"
+              :items="[
+                { label: 'Hover me to highlight siblings (grow=first-hover)', button: 'button' },
+                { label: 'Info', button: 'button' },
+                { label: 'Open', arrow: true, button: 'button' },
+              ]"
+              @click="onNavClick"
+            />
+            <JsBtnSplit
+              grow="last"
+              theme="light"
+              aria-label="Grow last group"
+              :items="[
+                { icon: 'bell', tip: 'Alerts', button: 'button' },
+                { label: 'Stretched Trailing Button (grow=last)', button: 'button' },
+              ]"
+              @click="onNavClick"
+            />
+            <JsBtnSplit
+              grow="all"
+              theme="dark"
+              aria-label="Equal width segmented buttons"
+              :items="[
+                { label: 'Day', active: true, button: 'button' },
+                { label: 'Week', button: 'button' },
+                { label: 'Month', button: 'button' },
+              ]"
+              @click="onNavClick"
+            />
+          </div>
+        </div>
+
+        <div class="pg-card">
+          <h3>Spaced Pill Mode (spaced=true)</h3>
+          <JsBtnSplit
+            :spaced="true"
+            grow="all"
+            theme="lightblue"
+            aria-label="Spaced navigation actions"
+            :items="[
+              { label: 'Back', icon: 'chevron-left', button: 'button' },
+              { label: 'Save Draft', button: 'button' },
+              { label: 'Next', icon: 'chevron-right', button: 'button' },
+            ]"
+            @click="onNavClick"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. JsNavList (Batch 2B) -->
+    <section class="pg-section" aria-labelledby="navlist-heading">
+      <h2 id="navlist-heading">
+        3. JsNavList (Headers, Semantic Dividers, Nested Submenus, Embedded Split &amp; Custom Component)
+      </h2>
+      <div class="pg-grid-2">
+        <div class="pg-card pg-dark-card">
+          <h3>Dark Theme (menu=true, Headers, Dividers, Embedded JsBtnSplit &amp; Nested Submenu)</h3>
+          <JsNavList
+            theme="dark"
+            size="sm"
+            :menu="true"
+            :parse-markdown="true"
+            aria-label="Dark navigation list"
+            :items="navListDemoItems"
+            @select="onListSelect"
+          />
+        </div>
+
+        <div class="pg-card">
+          <h3>Light Theme (Custom :component Entry, Badges &amp; External Link)</h3>
+          <JsNavList
+            theme="light"
+            size="sm"
+            :parse-markdown="true"
+            aria-label="Light navigation list"
+            :items="navListLightItems"
+            @select="onListSelect"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. JsDrop (Batch 2B) -->
+    <section class="pg-section" aria-labelledby="drop-heading">
+      <h2 id="drop-heading">
+        4. JsDrop (Triggered Popovers w/ Viewport Flip, Tabbed Menus, Dynamic :component &amp; Inline Panels)
+      </h2>
+      <div class="pg-stack">
+        <div class="pg-card">
+          <h3>Triggered Dropdowns (Auto-Flips Above Near Bottom Edge, Escape &amp; Outside-Click Close)</h3>
+          <div class="pg-row">
+            <JsDrop
+              trigger-label="Dark Menu (sm)"
+              trigger-icon="list-ul"
+              theme="dark"
+              size="sm"
+              :items="dropSimpleItems"
+              @select="onListSelect"
+            />
+            <JsDrop
+              trigger-label="Light Tabbed (md, right)"
+              trigger-icon="table-cells"
+              theme="light"
+              size="md"
+              :tabs="true"
+              :right="true"
+              :parse-markdown="true"
+              :items="navDropdownTabbed.items"
+              @select="onListSelect"
+            />
+            <JsDrop
+              trigger-label="Dynamic :component (md)"
+              theme="light"
+              size="md"
+              :component="dynamicModalContent"
+              :component-props="{
+                val: 'Rendered inside **JsDrop** via `:component` gn[Live]',
+                parse: true,
+              }"
+            />
+            <JsDrop
+              v-model="controlledDropOpen"
+              trigger-label="v-model Controlled"
+              theme="dark"
+              size="sm"
+            >
+              <template #default="{ close }">
+                <div class="pg-drop-custom">
+                  <p>Custom slot content inside <code>JsDrop</code>.</p>
+                  <button type="button" class="pg-btn pg-btn--primary" @click="close">
+                    Close Programmatically
+                  </button>
+                </div>
+              </template>
+            </JsDrop>
+          </div>
+        </div>
+
+        <div class="pg-card">
+          <h3>Standalone Inline Panels (No Trigger — Backwards-Compatible Panel Mode)</h3>
+          <div class="pg-row pg-row--top">
+            <JsDrop
+              theme="dark"
+              size="sm"
+              aria-label="Inline dark panel"
+              :items="dropSimpleItems"
+              @select="onListSelect"
+            />
+            <JsDrop
+              theme="light"
+              size="md"
+              :tabs="true"
+              :parse-markdown="true"
+              aria-label="Inline light tabbed panel"
+              :items="navDropdownTabbed.items"
+              @select="onListSelect"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. JsPanelNavItem (Batch 2B) -->
+    <section class="pg-section" aria-labelledby="panelnavitem-heading">
+      <h2 id="panelnavitem-heading">
+        5. JsPanelNavItem (Thin Wrapper Delegating to JsNavItem + dropPos &amp; Slot Forwarding)
+      </h2>
+      <div class="pg-row">
+        <JsPanelNavItem
+          theme="blue"
+          drop-pos="br"
+          :item="{
+            label: 'Panel Item (dropPos=br)',
+            icon: 'bell',
+            notifyCount: 2,
+            items: dropSimpleItems,
+          }"
+          @click="onNavClick"
+        />
+        <JsPanelNavItem
+          theme="light"
+          :item="{ label: 'Forwarded Custom SVG Slot', subLabel: 'Delegates to JsNavItem', button: 'button' }"
+          @click="onNavClick"
+        >
+          <template #icon>
+            <JsIcon color="#1e7e34">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg>
+            </JsIcon>
+          </template>
+        </JsPanelNavItem>
+      </div>
+    </section>
+
+    <!-- 6. JsModal -->
     <section class="pg-section" aria-labelledby="modal-heading">
       <h2 id="modal-heading">
-        2. JsModal (Sizes, Slots, Dynamic Component, Focus Trap &amp; Escape)
+        6. JsModal (Sizes, Slots, Dynamic Component, Focus Trap &amp; Escape)
       </h2>
       <div class="pg-row">
         <button type="button" class="pg-btn" @click="openModal('sm')">
@@ -460,10 +706,10 @@
       </JsModal>
     </section>
 
-    <!-- 3. JsMarkdown -->
+    <!-- 7. JsMarkdown -->
     <section class="pg-section" aria-labelledby="md-heading">
       <h2 id="md-heading">
-        3. JsMarkdown (Inline Formatting, Accessible Tags &amp; XSS Safety)
+        7. JsMarkdown (Inline Formatting, Accessible Tags &amp; XSS Safety)
       </h2>
       <div class="pg-stack">
         <div class="pg-card">
@@ -498,10 +744,10 @@
       </div>
     </section>
 
-    <!-- 4. JsTabs -->
+    <!-- 8. JsTabs -->
     <section class="pg-section" aria-labelledby="tabs-heading">
       <h2 id="tabs-heading">
-        4. JsTabs (Themes, Sizes, Alignments, Keyboard Arrows &amp; Disabled)
+        8. JsTabs (Themes, Sizes, Alignments, Keyboard Arrows &amp; Disabled)
       </h2>
       <div class="pg-stack">
         <div class="pg-card">
@@ -595,10 +841,10 @@
       </div>
     </section>
 
-    <!-- 5. JsIcon -->
+    <!-- 9. JsIcon -->
     <section class="pg-section" aria-labelledby="icons-heading">
       <h2 id="icons-heading">
-        5. JsIcon (Built-in Chrome &amp; Slotted Custom SVGs)
+        9. JsIcon (Built-in Chrome &amp; Slotted Custom SVGs)
       </h2>
       <div class="pg-row">
         <span class="pg-chip"><JsIcon name="search" /> search</span>
@@ -734,6 +980,60 @@ export default {
           },
         ],
       },
+      controlledDropOpen: false,
+      splitPublishItems: [
+        { label: "Publish", icon: "check", button: "button" },
+        {
+          tip: "Publish options",
+          items: [
+            { label: "Publish Now", icon: "check" },
+            { label: "Schedule...", icon: "bell" },
+            { divider: true },
+            { label: "Save as Draft" },
+          ],
+        },
+      ],
+      dropSimpleItems: [
+        { header: true, label: "Actions" },
+        { label: "View Details", icon: "search" },
+        { label: "Mark Complete", icon: "check" },
+        { divider: true },
+        { label: "Vue Docs", linkExt: "https://vuejs.org" },
+      ],
+      navListDemoItems: [
+        { header: true, label: "Workspace" },
+        { label: "Dashboard", icon: "table-cells", active: true },
+        { label: "Notifications", icon: "bell", notifyCount: 6, notifyColor: "red" },
+        { divider: true },
+        {
+          split: true,
+          items: [
+            { label: "Import", button: "button" },
+            { label: "Export", button: "button" },
+          ],
+        },
+        { divider: true },
+        {
+          label: "Nested Tools",
+          items: [
+            { label: "Token Inspector" },
+            { label: "WCAG Audit", icon: "check" },
+          ],
+        },
+      ],
+      navListLightItems: [
+        { header: true, label: "Resources *v3*" },
+        {
+          component: markRaw(JsMarkdown),
+          props: {
+            val: "Custom **component** row rendered inside JsNavList bl[Live]",
+            parse: true,
+          },
+        },
+        { divider: true },
+        { label: "Design System", subLabel: "Tokens & vanilla CSS", icon: "check" },
+        { label: "External Guide", linkExt: "https://vuejs.org" },
+      ],
     };
   },
   methods: {
@@ -743,6 +1043,9 @@ export default {
     },
     onNavClick(_event, item) {
       this.lastNavClick = item?.label || "(unnamed)";
+    },
+    onListSelect(item) {
+      this.lastNavClick = item?.label || "(list item)";
     },
   },
 };
@@ -911,5 +1214,30 @@ body {
   padding: 0.75rem;
   border-radius: var(--js-radius-md);
   background: var(--js-color-surface-dark);
+}
+
+.pg-dark-card {
+  background: var(--js-color-surface-dark);
+  color: var(--js-color-text-inverse);
+}
+
+.pg-dark-card > h3 {
+  color: var(--js-color-text-inverse-muted);
+}
+
+.pg-row--top {
+  align-items: flex-start;
+}
+
+.pg-drop-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.35rem;
+}
+
+.pg-drop-custom p {
+  margin: 0;
+  font-size: var(--js-font-size-sm);
 }
 </style>

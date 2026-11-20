@@ -10,6 +10,10 @@ import JsNavItemIcon from "./components/NavItem/NavItemIcon.vue";
 import JsNavItemLabels from "./components/NavItem/NavItemLabels.vue";
 import JsNavItemNotify from "./components/NavItem/NavItemNotify.vue";
 import JsNavItemTags from "./components/NavItem/NavItemTags.vue";
+import JsPanelNavItem from "./components/PanelNavItem.vue";
+import JsBtnSplit from "./components/BtnSplit.vue";
+import JsNavList from "./components/NavList.vue";
+import JsDrop from "./components/Drop.vue";
 
 // Components are added here as each Step 2 batch is completed.
 const components = {
@@ -23,6 +27,10 @@ const components = {
   JsNavItemLabels,
   JsNavItemNotify,
   JsNavItemTags,
+  JsPanelNavItem,
+  JsBtnSplit,
+  JsNavList,
+  JsDrop,
 };
 
 export {
@@ -36,6 +44,10 @@ export {
   JsNavItemLabels,
   JsNavItemNotify,
   JsNavItemTags,
+  JsPanelNavItem,
+  JsBtnSplit,
+  JsNavList,
+  JsDrop,
 };
 
 export default {

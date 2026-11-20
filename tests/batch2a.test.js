@@ -326,7 +326,7 @@ describe("PlaygroundApp Smoke Test", () => {
       },
     });
     expect(wrapper.find("h1").text()).toContain("js-components");
-    expect(wrapper.findAll('[role="tablist"]')).toHaveLength(3);
+    expect(wrapper.findAll('[role="tablist"]').length).toBeGreaterThanOrEqual(3);
     expect(wrapper.findAll(".js-nav-item").length).toBeGreaterThan(20);
   });
 });

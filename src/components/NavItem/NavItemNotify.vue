@@ -1,16 +1,26 @@
 <template>
   <span
     v-if="hasNotify"
-    :class="['js-nav-item-notify', 'js-nav-item-notify--' + resolvedColor]"
+    :class="[
+      'js-nav-item-notify',
+      'js-nav-item-notify--' + resolvedColor,
+      { 'js-nav-item-notify--count-only': isCountOnly },
+    ]"
     :title="tipText || undefined"
     :aria-label="accessibleLabel || undefined"
     :aria-live="live ? 'polite' : undefined"
   >
-    <span v-if="item.notifyCount > 0">{{ item.notifyCount }}</span>
-    <span v-if="item.notifyLabel">{{ item.notifyLabel }}</span>
-    <slot name="icon">
-      <JsIcon v-if="item.notifyIcon" :name="item.notifyIcon" />
-    </slot>
+    <span v-if="item.notifyCount > 0" class="js-nav-item-notify__count">{{
+      item.notifyCount
+    }}</span>
+    <span v-if="item.notifyLabel" class="js-nav-item-notify__label">{{
+      item.notifyLabel
+    }}</span>
+    <template v-if="$slots.icon || item.notifyIcon">
+      <slot name="icon">
+        <JsIcon v-if="item.notifyIcon" :name="item.notifyIcon" />
+      </slot>
+    </template>
   </span>
 </template>
 
@@ -60,6 +70,14 @@ export default {
           this.$slots.icon
       );
     },
+    isCountOnly() {
+      return Boolean(
+        this.item.notifyCount > 0 &&
+          !this.item.notifyLabel &&
+          !this.item.notifyIcon &&
+          !this.$slots.icon
+      );
+    },
     resolvedColor() {
       const color = this.item.notifyColor || this.notifyColor || "orange";
       return VALID_COLORS.includes(color) ? color : "orange";
@@ -82,18 +100,28 @@ export default {
 
 <style scoped>
 .js-nav-item-notify {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.25em;
-  min-width: 1.4em;
-  padding: 0.1em 0.45em;
+  min-width: 1.65em;
+  min-height: 1.65em;
+  padding: 0.22em 0.55em;
   border-radius: var(--js-radius-pill);
-  font-size: 0.78em;
-  font-weight: 700;
-  line-height: 1.25;
+  font-size: max(0.75rem, 0.78em);
+  font-weight: 600;
+  font-variant-numeric: proportional-nums;
+  line-height: 1;
+  text-align: center;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* Optical balance for numeric-only pills (offsets sans-serif left side-bearing) */
+.js-nav-item-notify--count-only {
+  gap: 0;
+  padding: 0.22em 0.5em 0.22em 0.42em;
 }
 
 .js-nav-item-notify--orange {
