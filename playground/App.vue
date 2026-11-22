@@ -5,6 +5,8 @@
       <p>
         Batches 2A &amp; 2B Showcase — Vue 3 Options API, semantic HTML, WCAG
         2.1 AA, vanilla CSS, and slotted SVG icons.
+        Batches 2A, 2B &amp; 2C Showcase — Vue 3 Options API, semantic HTML,
+        WCAG 2.1 AA, vanilla CSS, and slotted SVG icons.
       </p>
     </header>
 
@@ -620,9 +622,231 @@
     </section>
 
     <!-- 6. JsModal -->
+    <!-- 6. JsTitleBar (Batch 2C) -->
+    <section class="pg-section" aria-labelledby="titlebar-heading">
+      <h2 id="titlebar-heading">
+        6. JsTitleBar (Breadcrumbs, Configurable Heading Level, Docked Banner, Dropdown Header &amp; Dark Theme)
+      </h2>
+      <div class="pg-stack">
+        <div class="pg-card">
+          <h3>Full TitleBar (Breadcrumbs, Custom SVG Slot, Action Buttons, Docked Banner &amp; Description)</h3>
+          <JsTitleBar
+            :heading-level="3"
+            title="Design *System* gn[v0.1]"
+            sub-title="Lightweight, accessible Vue 3 primitives"
+            :parse-markdown="true"
+            background="#e6f3f8"
+            :crumbs="[
+              { label: 'Home', route: '#navitem-heading' },
+              { label: 'Library', route: '#titlebar-heading' },
+              { label: 'Components' },
+            ]"
+            :buttons="[
+              { label: 'Docs', linkExt: 'https://vuejs.org', theme: 'light' },
+              { label: 'New Release', icon: 'check', theme: 'blue', button: 'button', onClick: onNavClick },
+            ]"
+            banner-icon="bell"
+            banner-label="Zero FontAwesome or Sass required — style SVGs directly from your app."
+            banner-background="#ffffff"
+            :banner-buttons="[
+              { label: 'Dismiss', theme: 'dark-text', button: 'button', onClick: onNavClick },
+            ]"
+            description="Semantic <header>, <nav><ol> breadcrumbs, configurable heading levels, and responsive stacking."
+          >
+            <template #icon>
+              <JsIcon color="#1d6f90">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              </JsIcon>
+            </template>
+          </JsTitleBar>
+        </div>
+
+        <div class="pg-card pg-dark-card">
+          <h3>Dark Theme + Dropdown Title Switcher</h3>
+          <JsTitleBar
+            :heading-level="3"
+            :dark="true"
+            title="Workspace Alpha"
+            sub-title="Click heading to switch workspace"
+            icon="table-cells"
+            background="#1c1f23"
+            drop-theme="dark"
+            drop-size="md"
+            :drop="[
+              { header: true, label: 'Switch Workspace' },
+              { label: 'Workspace Alpha', active: true, icon: 'check', onClick: onNavClick },
+              { label: 'Workspace Beta', icon: 'bell', onClick: onNavClick },
+              { divider: true },
+              { label: 'Create Workspace', icon: 'chevron-right', onClick: onNavClick },
+            ]"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. JsPanel (Batch 2C) -->
+    <section class="pg-section" aria-labelledby="panel-heading">
+      <h2 id="panel-heading">
+        7. JsPanel (Semantic Landmarks, Header/Footer Slots, Scroll Nudges, Compact &amp; Background Card)
+      </h2>
+      <div class="pg-grid-2">
+        <JsPanel
+          title="Scrollable *Panel* bl[Live]"
+          :heading-level="3"
+          :parse-markdown="true"
+          icon="list-ul"
+          height="sm"
+          :scroll-hint="true"
+          :footer="{ label: 'View all activity', linkExt: 'https://vuejs.org', icon: 'external' }"
+        >
+          <template #headerRight>
+            <JsNavItem
+              size="xs"
+              theme="lightblue"
+              :item="{ label: 'Refresh', button: 'button' }"
+              @click="onNavClick"
+            />
+          </template>
+          <p v-for="n in 8" :key="n" class="pg-panel-line">
+            Activity entry #{{ n }} — scroll or click the accessible chevron nudge buttons.
+          </p>
+        </JsPanel>
+
+        <JsPanel
+          as="article"
+          title="Compact Card with Above Note"
+          :heading-level="3"
+          above-note="Featured gn[New]"
+          :parse-markdown="true"
+          :compact="true"
+          height="auto"
+          :scroll="false"
+          :img="demoThumb"
+          img-alt="Geometric emblem"
+          banner="Updated today"
+          :banner-dark="false"
+          notify="2 updates"
+          :notify-dark="false"
+        >
+          <p class="pg-panel-line">
+            Uses semantic <code>&lt;article&gt;</code>, <code>&lt;header&gt;</code>, and <code>&lt;footer&gt;</code> with zero rigid <code>min-width</code> locks.
+          </p>
+          <template #footer>
+            <JsNavItem
+              size="sm"
+              theme="blue"
+              :item="{ label: 'Open Details', arrow: true, button: 'button' }"
+              @click="onNavClick"
+            />
+          </template>
+        </JsPanel>
+
+        <JsPanel
+          title="Hero Background Panel"
+          :heading-level="3"
+          :title-background-transparent="true"
+          :background-image="demoHeroBg"
+          :background-image-shade-top="true"
+          :background-image-zoom="true"
+          height="md"
+          :scroll="false"
+          :primary-action="{ label: 'Explore', icon: 'search', button: 'button', circle: true }"
+          :caption="{ label: 'Hover to zoom background', link: '#panel-heading', dark: true }"
+          @action-click="onNavClick"
+        >
+          <template #icon>
+            <JsIcon color="#ffffff">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg>
+            </JsIcon>
+          </template>
+        </JsPanel>
+      </div>
+    </section>
+
+    <!-- 8. JsPanelNav (Batch 2C) -->
+    <section class="pg-section" aria-labelledby="panelnav-heading">
+      <h2 id="panelnav-heading">
+        8. JsPanelNav (Live Search + &lt;output&gt; Count, View Switcher, Grouping, Limit &amp; Responsive Grids)
+      </h2>
+      <div class="pg-stack">
+        <div class="pg-card">
+          <h3>Searchable + View Switcher (List / Thumb Grid) + Load All Limit (4 of 6 shown initially)</h3>
+          <JsPanelNav
+            aria-label="Library modules"
+            :menu="true"
+            :search="true"
+            item-units="modules"
+            layout="cols-3"
+            :items-limit="4"
+            :parse-markdown="true"
+            :items="panelNavItems"
+            @select="onListSelect"
+          />
+        </div>
+
+        <div class="pg-card">
+          <h3>Grouped Navigation (group-label-show-count + group-labels-left + cols-2)</h3>
+          <JsPanelNav
+            aria-label="Grouped components"
+            :grouped="true"
+            group-by="category"
+            :group-label-show-count="true"
+            :group-labels-left="true"
+            layout="cols-2"
+            :items="panelNavGroupedItems"
+            @select="onListSelect"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. JsTable (Batch 2C) -->
+    <section class="pg-section" aria-labelledby="table-heading">
+      <h2 id="table-heading">
+        9. JsTable (Semantic Caption &amp; Scope Headers, Sticky Column, Themes, Actions &amp; Dark Mode)
+      </h2>
+      <div class="pg-stack">
+        <div class="pg-card">
+          <h3>Light Table (Striped, Hover, V-Lines, Row Headers, Sticky First Col, Cell Themes &amp; Interactive Cells)</h3>
+          <JsTable
+            caption="Component Readiness Matrix (Batch 2A–2C)"
+            :rows="tableLightRows"
+            :header-row-count="1"
+            :header-col-count="1"
+            :left-col-sticky="true"
+            :striped="true"
+            :hover="true"
+            :v-lines="true"
+            :parse-markdown="true"
+            @cell-click="onTableCellClick"
+          />
+        </div>
+
+        <div class="pg-card pg-dark-card">
+          <h3>Dark Theme Table (Compact Padding, Right-Aligned Metrics &amp; Custom Scoped #cell Slot)</h3>
+          <JsTable
+            caption="Bundle Snapshot (Dark Theme)"
+            :rows="tableDarkRows"
+            :dark="true"
+            :striped="true"
+            :hover="true"
+            padding="sm"
+            :parse-markdown="true"
+            @cell-click="onTableCellClick"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. JsModal -->
     <section class="pg-section" aria-labelledby="modal-heading">
       <h2 id="modal-heading">
         6. JsModal (Sizes, Slots, Dynamic Component, Focus Trap &amp; Escape)
+        10. JsModal (Sizes, Slots, Dynamic Component, Focus Trap &amp; Escape)
       </h2>
       <div class="pg-row">
         <button type="button" class="pg-btn" @click="openModal('sm')">
@@ -707,9 +931,11 @@
     </section>
 
     <!-- 7. JsMarkdown -->
+    <!-- 11. JsMarkdown -->
     <section class="pg-section" aria-labelledby="md-heading">
       <h2 id="md-heading">
         7. JsMarkdown (Inline Formatting, Accessible Tags &amp; XSS Safety)
+        11. JsMarkdown (Inline Formatting, Accessible Tags &amp; XSS Safety)
       </h2>
       <div class="pg-stack">
         <div class="pg-card">
@@ -745,9 +971,11 @@
     </section>
 
     <!-- 8. JsTabs -->
+    <!-- 12. JsTabs -->
     <section class="pg-section" aria-labelledby="tabs-heading">
       <h2 id="tabs-heading">
         8. JsTabs (Themes, Sizes, Alignments, Keyboard Arrows &amp; Disabled)
+        12. JsTabs (Themes, Sizes, Alignments, Keyboard Arrows &amp; Disabled)
       </h2>
       <div class="pg-stack">
         <div class="pg-card">
@@ -842,9 +1070,11 @@
     </section>
 
     <!-- 9. JsIcon -->
+    <!-- 13. JsIcon -->
     <section class="pg-section" aria-labelledby="icons-heading">
       <h2 id="icons-heading">
         9. JsIcon (Built-in Chrome &amp; Slotted Custom SVGs)
+        13. JsIcon (Built-in Chrome &amp; Slotted Custom SVGs)
       </h2>
       <div class="pg-row">
         <span class="pg-chip"><JsIcon name="search" /> search</span>
@@ -1034,6 +1264,84 @@ export default {
         { label: "Design System", subLabel: "Tokens & vanilla CSS", icon: "check" },
         { label: "External Guide", linkExt: "https://vuejs.org" },
       ],
+      demoHeroBg:
+        "data:image/svg+xml;utf8," +
+        encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f3d52"/><stop offset="100%" stop-color="#2783a8"/></linearGradient></defs><rect width="600" height="300" fill="url(#g)"/><circle cx="480" cy="70" r="105" fill="#ffffff" fill-opacity="0.18"/><circle cx="120" cy="230" r="85" fill="#ffffff" fill-opacity="0.14"/><polygon points="220,260 320,90 420,260" fill="#ffffff" fill-opacity="0.12"/></svg>'
+        ),
+      panelNavItems: [
+        { label: "NavItem", subLabel: "Core interactive pill", icon: "check", img: "", notifyCount: 3, button: "button" },
+        { label: "Modal", subLabel: "Accessible dialog", icon: "bell", button: "button" },
+        { label: "Tabs", subLabel: "WAI-ARIA tablist", icon: "table-cells", button: "button" },
+        { label: "Table", subLabel: "Semantic data grid", icon: "list-ul", button: "button" },
+        { label: "Panel", subLabel: "Scrollable landmark", icon: "search", button: "button" },
+        { label: "TitleBar", subLabel: "Header & breadcrumbs", icon: "external", button: "button" },
+      ],
+      panelNavGroupedItems: [
+        { category: "Primitives", label: "JsIcon", icon: "search", button: "button" },
+        { category: "Primitives", label: "JsMarkdown", icon: "check", button: "button" },
+        { category: "Navigation", label: "JsNavItem", icon: "bell", notifyCount: 2, button: "button" },
+        { category: "Navigation", label: "JsBtnSplit", icon: "list-ul", button: "button" },
+        { category: "Layout", label: "JsPanel", icon: "table-cells", button: "button" },
+        { category: "Layout", label: "JsTitleBar", icon: "external", button: "button" },
+      ],
+      tableLightRows: [
+        [
+          "Component",
+          "Batch",
+          { label: "Status", align: "c" },
+          { label: "WCAG AA", align: "c" },
+          { label: "Action", align: "r" },
+        ],
+        [
+          { label: "*JsNavItem*", icon: "check", iconBG: true },
+          "2A",
+          { label: "Complete", theme: "green", align: "c" },
+          { label: "Verified", theme: "blue", align: "c" },
+          { label: "Inspect", button: true, align: "r" },
+        ],
+        [
+          { label: "*JsBtnSplit*", icon: "list-ul" },
+          "2B",
+          { label: "Complete", theme: "green", align: "c" },
+          { label: "Verified", theme: "blue", align: "c" },
+          { label: "Docs", linkExt: "https://vuejs.org", align: "r" },
+        ],
+        [
+          { label: "*JsTable*", icon: "table-cells" },
+          "2C",
+          { label: "In Review", theme: "yellow", align: "c" },
+          { label: "Verified", theme: "blue", align: "c" },
+          { label: "Inspect", button: true, align: "r" },
+        ],
+        [
+          { label: "*JsForm*", icon: "alert" },
+          "2D",
+          { label: "Queued", theme: "grey", align: "c" },
+          { label: "Pending", theme: "muted", align: "c" },
+          { label: "Next", button: true, align: "r" },
+        ],
+      ],
+      tableDarkRows: [
+        [
+          "Artifact",
+          { label: "Format", align: "c" },
+          { label: "Status", align: "c" },
+          { label: "Notes", align: "r" },
+        ],
+        [
+          "js-components.js",
+          { label: "ESM", align: "c" },
+          { label: "Tree-shakeable", theme: "green", align: "c" },
+          { label: "Vue 3 Options API", align: "r" },
+        ],
+        [
+          "style.css",
+          { label: "Vanilla CSS", align: "c" },
+          { label: "Zero Sass", theme: "blue", align: "c" },
+          { label: "--js-* tokens", align: "r" },
+        ],
+      ],
     };
   },
   methods: {
@@ -1046,6 +1354,9 @@ export default {
     },
     onListSelect(item) {
       this.lastNavClick = item?.label || "(list item)";
+    },
+    onTableCellClick({ cell }) {
+      this.lastNavClick = `Table cell: ${cell?.label || "(cell)"}`;
     },
   },
 };
@@ -1239,5 +1550,14 @@ body {
 .pg-drop-custom p {
   margin: 0;
   font-size: var(--js-font-size-sm);
+}
+
+.pg-panel-line {
+  margin: 0 0 0.5rem;
+  font-size: var(--js-font-size-sm);
+}
+
+.pg-panel-line:last-child {
+  margin-bottom: 0;
 }
 </style>

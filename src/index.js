@@ -14,6 +14,10 @@ import JsPanelNavItem from "./components/PanelNavItem.vue";
 import JsBtnSplit from "./components/BtnSplit.vue";
 import JsNavList from "./components/NavList.vue";
 import JsDrop from "./components/Drop.vue";
+import JsPanel from "./components/Panel.vue";
+import JsPanelNav from "./components/PanelNav.vue";
+import JsTitleBar from "./components/TitleBar.vue";
+import JsTable from "./components/Table.vue";
 
 // Components are added here as each Step 2 batch is completed.
 const components = {
@@ -31,6 +35,10 @@ const components = {
   JsBtnSplit,
   JsNavList,
   JsDrop,
+  JsPanel,
+  JsPanelNav,
+  JsTitleBar,
+  JsTable,
 };
 
 export {
@@ -48,6 +56,10 @@ export {
   JsBtnSplit,
   JsNavList,
   JsDrop,
+  JsPanel,
+  JsPanelNav,
+  JsTitleBar,
+  JsTable,
 };
 
 export default {

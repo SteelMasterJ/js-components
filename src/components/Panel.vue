@@ -1,167 +1,175 @@
 <template>
-  <div
-    :id="_uid"
+  <component
+    :is="as"
+    :id="panelId"
+    :aria-labelledby="title ? titleId : undefined"
     :class="[
-      'panel',
-      { 'panel-cover-link': primaryActionCoverLink },
-      { 'panel-hover': primaryActionHover },
-      { 'panel-compact': compact },
+      'js-panel',
+      { 'js-panel--cover-link': primaryActionCoverLink },
+      { 'js-panel--hover': primaryActionHover },
+      { 'js-panel--compact': compact },
+      { 'js-panel--has-bg': Boolean(backgroundImage) },
     ]"
-    :style="{
-      backgroundColor: backgroundColor,
-      gridColumn: spanVal,
-    }"
+    :style="rootStyle"
   >
     <div
-      class="above"
       v-if="aboveNote || $slots.above"
-      :style="{
-        borderColor: backgroundColor,
-      }"
+      class="js-panel__above"
+      :style="backgroundColor ? { borderColor: backgroundColor } : undefined"
     >
-      <slot v-if="$slots.above" name="above"></slot>
-      <JsMarkdown
-        class="note"
-        v-else
-        :parse="parseMarkdown.match(/title|\*/)"
-        :val="aboveNote"
-      />
+      <slot name="above">
+        <JsMarkdown
+          class="js-panel__note"
+          :parse="shouldParse('title')"
+          :val="aboveNote"
+        />
+      </slot>
     </div>
-    <div v-if="backgroundImage" class="bg">
+
+    <div v-if="backgroundImage" class="js-panel__bg" aria-hidden="true">
       <div
         :class="[
-          'bg-cover-img',
-          { 'bg-cover-img-padded': backgroundImagePadded },
-          { 'bg-cover-img-zoom': backgroundImageZoom },
-          { 'bg-cover-img-centered': backgroundImageCentered },
-          { 'bg-cover-img-shade-top': backgroundImageShadeTop },
-          { 'bg-cover-img-left': backgroundPositionLeft },
-          ,
-          { 'bg-cover-img-right': backgroundPositionRight },
+          'js-panel__bg-img',
+          { 'js-panel__bg-img--padded': backgroundImagePadded },
+          { 'js-panel__bg-img--zoom': backgroundImageZoom },
+          { 'js-panel__bg-img--centered': backgroundImageCentered },
+          { 'js-panel__bg-img--shade-top': backgroundImageShadeTop },
+          { 'js-panel__bg-img--left': backgroundPositionLeft },
+          { 'js-panel__bg-img--right': backgroundPositionRight },
         ]"
-        :style="[
-          { backgroundImage: 'url(' + backgroundImage + ')' },
-          {
-            backgroundSize: backgroundImageSize
-              ? `${backgroundImageSize}px`
-              : undefined,
-          },
-        ]"
+        :style="bgImageStyle"
       ></div>
     </div>
-    <div v-if="$slots.header">
-      <div class="header" v-if="$slots.header">
-        <slot name="header"></slot>
-      </div>
+
+    <div v-if="$slots.header" class="js-panel__custom-header">
+      <slot name="header" />
     </div>
-    <div
-      v-if="
-        icon ||
-        img ||
-        title ||
-        $slots.headerLeft ||
-        $slots.headerRight ||
-        $slots.subActions
-      "
+
+    <header
+      v-if="hasTitleBar"
       :class="[
-        'title',
-        'title-' + titleSize,
-        { 'title-dark': titleDark },
-        { 'title-transparent': titleBackgroundTransparent },
+        'js-panel__title',
+        'js-panel__title--' + titleSize,
+        { 'js-panel__title--dark': titleDark },
+        { 'js-panel__title--transparent': titleBackgroundTransparent },
       ]"
     >
-      <div class="text" v-if="icon || img || title">
-        <i v-if="icon" :class="['icn fas', 'fa-' + icon]" :title="title"></i>
-        <span v-if="img" class="thumb"><img :src="img" alt="thumb" /></span>
-        <h2
+      <div v-if="icon || img || title || $slots.icon" class="js-panel__heading-group">
+        <span v-if="$slots.icon || icon" class="js-panel__icon">
+          <slot name="icon">
+            <JsIcon :name="icon" />
+          </slot>
+        </span>
+        <span v-if="img" class="js-panel__thumb">
+          <img :src="img" :alt="resolvedImgAlt" loading="lazy" />
+        </span>
+        <component
+          :is="headingTag"
           v-if="title"
-          class="label"
-          :data-test-id="titleTestId"
-          :title="title"
+          :id="titleId"
+          class="js-panel__heading"
+          :data-test-id="titleTestId || undefined"
         >
-          <JsMarkdown :parse="parseMarkdown.match(/title|\*/)" :val="title" />
-        </h2>
+          <JsMarkdown :parse="shouldParse('title')" :val="title" />
+        </component>
       </div>
 
-      <div class="header-left" v-if="$slots.headerLeft">
-        <slot name="headerLeft"></slot>
+      <div v-if="$slots.headerLeft" class="js-panel__header-left">
+        <slot name="headerLeft" />
       </div>
-      <div class="header-right" v-if="$slots.headerRight">
-        <slot name="headerRight"></slot>
+      <div v-if="$slots.headerRight" class="js-panel__header-right">
+        <slot name="headerRight" />
       </div>
-      <div class="sub-actions" v-if="$slots.subActions">
-        <slot name="subActions"></slot>
+      <div v-if="$slots.subActions" class="js-panel__sub-actions">
+        <slot name="subActions" />
       </div>
-    </div>
-    <div v-if="banner || notify" class="above-text">
-      <div v-if="banner" :class="['banner', { 'banner-dark': bannerDark }]">
-        <JsMarkdown :parse="parseMarkdown.match(/banner|\*/)" :val="banner" />
-      </div>
-      <div v-if="notify" :class="['notify', { 'notify-dark': notifyDark }]">
-        {{ notify }} <i class="icn fas fa-bell"></i>
-      </div>
-    </div>
-    <div class="content-wrap">
+    </header>
+
+    <div v-if="banner || notify" class="js-panel__above-text">
       <div
-        ref="content"
-        @scroll.passive="setScrollHints"
-        :class="[
-          'content',
-          'content-' + height,
-          { 'content-no-scroll': scroll === false },
-          { 'content-hide-scrollbars': !scrollbars },
-          { 'content-scroll-y': contentScrollY },
-          { 'content-scroll-x': contentScrollX },
-        ]"
+        v-if="banner"
+        :class="['js-panel__banner', { 'js-panel__banner--dark': bannerDark }]"
       >
-        <div class="content-tab content-tab-active">
-          <slot />
-        </div>
+        <JsMarkdown :parse="shouldParse('banner')" :val="banner" />
       </div>
-      <a
-        v-if="showScrollDown"
-        @click.prevent="nudgeScroll('y', 1)"
-        class="scroll-btn scroll-btn-down"
-        href="#"
-        title="scroll"
-        ><i class="icn fas fa-angle-down"></i
-      ></a>
-      <a
-        v-if="showScrollUp"
-        @click.prevent="nudgeScroll('y', -1)"
-        class="scroll-btn scroll-btn-up"
-        href="#"
-        title="scroll"
-        ><i class="icn fas fa-angle-up"></i
-      ></a>
-      <a
-        v-if="showScrollRight"
-        @click.prevent="nudgeScroll('x', 1)"
-        class="scroll-btn scroll-btn-right"
-        href="#"
-        title="scroll"
-        ><i class="icn fas fa-angle-right"></i
-      ></a>
-      <a
-        v-if="showScrollLeft"
-        @click.prevent="nudgeScroll('x', -1)"
-        class="scroll-btn scroll-btn-left"
-        href="#"
-        title="scroll"
-        ><i class="icn fas fa-angle-left"></i
-      ></a>
+      <div
+        v-if="notify"
+        :class="['js-panel__notify', { 'js-panel__notify--dark': notifyDark }]"
+      >
+        <span>{{ notify }}</span>
+        <JsIcon name="bell" />
+      </div>
     </div>
-    <JsPanelNavItem
-      :class="[
-        'action',
-        { 'action-centered': primaryAction.circle || primaryAction.pill },
-      ]"
+
+    <div class="js-panel__content-wrap">
+      <div
+        ref="contentRef"
+        :class="[
+          'js-panel__content',
+          'js-panel__content--' + height,
+          { 'js-panel__content--no-scroll': scroll === false },
+          { 'js-panel__content--hide-scrollbars': !scrollbars },
+          { 'js-panel__content--scroll-y': contentScrollY },
+          { 'js-panel__content--scroll-x': contentScrollX },
+        ]"
+        @scroll.passive="setScrollHints"
+      >
+        <slot />
+      </div>
+
+      <button
+        v-if="showScrollUp"
+        type="button"
+        class="js-panel__scroll-btn js-panel__scroll-btn--up"
+        aria-label="Scroll content up"
+        @click="nudgeScroll('y', -1)"
+      >
+        <JsIcon name="chevron-up" />
+      </button>
+      <button
+        v-if="showScrollDown"
+        type="button"
+        class="js-panel__scroll-btn js-panel__scroll-btn--down"
+        aria-label="Scroll content down"
+        @click="nudgeScroll('y', 1)"
+      >
+        <JsIcon name="chevron-down" />
+      </button>
+      <button
+        v-if="showScrollLeft"
+        type="button"
+        class="js-panel__scroll-btn js-panel__scroll-btn--left"
+        aria-label="Scroll content left"
+        @click="nudgeScroll('x', -1)"
+      >
+        <JsIcon name="chevron-left" />
+      </button>
+      <button
+        v-if="showScrollRight"
+        type="button"
+        class="js-panel__scroll-btn js-panel__scroll-btn--right"
+        aria-label="Scroll content right"
+        @click="nudgeScroll('x', 1)"
+      >
+        <JsIcon name="chevron-right" />
+      </button>
+    </div>
+
+    <JsNavItem
       v-if="primaryAction"
+      :class="[
+        'js-panel__action',
+        {
+          'js-panel__action--centered': Boolean(
+            primaryAction.circle || primaryAction.pill
+          ),
+        },
+      ]"
       :size="
         primaryAction.size ||
-        (primaryAction.circle || primaryAction.pill ? 'md' : 'xl')
+        (primaryAction.circle || primaryAction.pill ? 'md' : 'lg')
       "
-      :circle="primaryAction.pill"
+      :circle="Boolean(primaryAction.circle)"
       :theme="
         primaryAction.theme ||
         (primaryAction.dark || primaryAction.circle
@@ -169,73 +177,93 @@
           : 'light-xray')
       "
       :item="primaryAction"
+      @click="(event, item) => $emit('action-click', event, item)"
     />
+
     <a
       v-if="caption"
-      :target="caption.ext"
-      :href="caption.link"
-      :class="['caption', { 'caption-dark': caption.dark }]"
-      ><div class="text"><JsMarkdown :val="caption.label" /></div>
-    </a>
-    <div v-if="footer" class="below-text">
-      <a
-        v-if="footer.link"
-        :target="footer.ext"
-        :href="footer.link"
-        class="footer"
-        ><i v-if="footer.icon" :class="'icn fas fa-' + footer.icon"></i>
-        <JsMarkdown :val="footer.label" />
-      </a>
-      <span v-else class="footer">
-        <i v-if="footer.icon" :class="'icn fas fa-' + footer.icon"></i>
-        {{ footer.label }}
+      :href="caption.link || caption.linkExt || undefined"
+      :target="captionIsExternal ? '_blank' : undefined"
+      :rel="captionIsExternal ? 'noopener noreferrer' : undefined"
+      :class="['js-panel__caption', { 'js-panel__caption--dark': caption.dark }]"
+    >
+      <span class="js-panel__caption-text">
+        <JsMarkdown :parse="shouldParse('caption')" :val="caption.label" />
       </span>
-    </div>
-    <div class="below-text" v-if="$slots.footer">
-      <slot name="footer"></slot>
-    </div>
-  </div>
+    </a>
+
+    <footer v-if="footer || $slots.footer" class="js-panel__footer">
+      <slot name="footer">
+        <a
+          v-if="footer && (footer.link || footer.linkExt)"
+          :href="footer.link || footer.linkExt"
+          :target="footerIsExternal ? '_blank' : undefined"
+          :rel="footerIsExternal ? 'noopener noreferrer' : undefined"
+          class="js-panel__footer-link"
+        >
+          <JsIcon v-if="footer.icon" :name="footer.icon" />
+          <JsMarkdown :parse="shouldParse('footer')" :val="footer.label" />
+        </a>
+        <span v-else-if="footer" class="js-panel__footer-text">
+          <JsIcon v-if="footer.icon" :name="footer.icon" />
+          <span>{{ footer.label }}</span>
+        </span>
+      </slot>
+    </footer>
+  </component>
 </template>
 
 <script>
+import JsIcon from "./Icon.vue";
 import JsMarkdown from "./Markdown.vue";
-import JsPanelNavItem from "./PanelNavItem.vue";
+import JsNavItem from "./NavItem.vue";
+import { createUid } from "../utils/uid.js";
 
 export default {
   name: "JsPanel",
   components: {
+    JsIcon,
     JsMarkdown,
-    JsPanelNavItem,
+    JsNavItem,
   },
-  data() {
+  provide() {
     return {
-      contentScrollX: false,
-      contentScrollY: false,
-      contentScrolled: false,
-      contentScrolledLeft: false,
-      contentScrolledRight: false,
-      contentScrolledTop: false,
-      contentScrolledBottom: false,
-      ob: null,
-      currentTab: 1,
+      jsPanelRefreshScroll: this.setScrollHints,
     };
   },
   props: {
-    // Main h2 header
+    as: {
+      type: String,
+      default: "section",
+      validator(v) {
+        return ["section", "article", "div", "aside"].includes(v);
+      },
+    },
+    headingLevel: {
+      type: Number,
+      default: 2,
+      validator(v) {
+        return v >= 1 && v <= 6;
+      },
+    },
     title: {
       type: String,
-      default: null,
+      default: "",
     },
-    // optional data-test-id for the title
     titleTestId: {
       type: String,
-      default: "panel:title",
+      default: "",
     },
-    // Title text color, defaults to light on dark
-    titleDark: Boolean,
+    titleDark: {
+      type: Boolean,
+      default: false,
+    },
     titleSize: {
       type: String,
       default: "md",
+      validator(v) {
+        return ["sm", "md", "lg"].includes(v);
+      },
     },
     aboveNote: {
       type: String,
@@ -243,7 +271,7 @@ export default {
     },
     banner: {
       type: String,
-      default: null,
+      default: "",
     },
     bannerDark: {
       type: Boolean,
@@ -251,7 +279,7 @@ export default {
     },
     notify: {
       type: String,
-      default: null,
+      default: "",
     },
     notifyDark: {
       type: Boolean,
@@ -261,23 +289,32 @@ export default {
       type: Object,
       default: null,
     },
-    // Icon shown in top-left corner of panel container
     icon: {
       type: String,
-      default: null,
+      default: "",
     },
     img: {
       type: String,
-      default: null,
+      default: "",
     },
-    titleBackgroundTransparent: Boolean,
-    parseMarkdown: {
+    imgAlt: {
       type: String,
+      default: "",
+    },
+    titleBackgroundTransparent: {
+      type: Boolean,
+      default: false,
+    },
+    parseMarkdown: {
+      type: [Boolean, String],
       default: "",
     },
     height: {
       type: String,
       default: "md",
+      validator(v) {
+        return ["sm", "md", "lg", "xl", "auto"].includes(v);
+      },
     },
     scroll: {
       type: Boolean,
@@ -295,545 +332,633 @@ export default {
       type: Boolean,
       default: true,
     },
-    backgroundImage: String,
-    backgroundImagePadded: Boolean,
-    backgroundImageCentered: Boolean,
-    backgroundImageShadeTop: Boolean,
-    backgroundImageZoom: Boolean,
-    backgroundColor: String,
+    backgroundImage: {
+      type: String,
+      default: "",
+    },
+    backgroundImagePadded: {
+      type: Boolean,
+      default: false,
+    },
+    backgroundImageCentered: {
+      type: Boolean,
+      default: false,
+    },
+    backgroundImageShadeTop: {
+      type: Boolean,
+      default: false,
+    },
+    backgroundImageZoom: {
+      type: Boolean,
+      default: false,
+    },
+    backgroundColor: {
+      type: String,
+      default: "",
+    },
     backgroundImageSize: {
       type: Number,
       default: null,
     },
-    backgroundPositionLeft: Boolean,
-    backgroundPositionRight: Boolean,
-    primaryAction: Object,
-    primaryActionHover: Boolean,
-    primaryActionCoverLink: Boolean,
-    caption: Object,
-    subActions: Array,
+    backgroundPositionLeft: {
+      type: Boolean,
+      default: false,
+    },
+    backgroundPositionRight: {
+      type: Boolean,
+      default: false,
+    },
+    primaryAction: {
+      type: Object,
+      default: null,
+    },
+    primaryActionHover: {
+      type: Boolean,
+      default: false,
+    },
+    primaryActionCoverLink: {
+      type: Boolean,
+      default: false,
+    },
+    caption: {
+      type: Object,
+      default: null,
+    },
     span: {
-      type: String,
+      type: [String, Number],
       default: "1",
     },
   },
-  mounted() {
-    if (this.scrollHint) this.setScrollHints();
-    // window.addEventListener("resize", this.setScrollHints);
-  },
-  unmounted() {
-    window.removeEventListener("resize", this.setScrollHints);
+  emits: ["action-click"],
+  data() {
+    return {
+      panelId: createUid("js-panel"),
+      titleId: createUid("js-panel-title"),
+      contentScrollX: false,
+      contentScrollY: false,
+      contentScrolledLeft: true,
+      contentScrolledRight: true,
+      contentScrolledTop: true,
+      contentScrolledBottom: true,
+      resizeObserver: null,
+    };
   },
   computed: {
+    headingTag() {
+      return `h${this.headingLevel}`;
+    },
+    hasTitleBar() {
+      return Boolean(
+        this.icon ||
+          this.img ||
+          this.title ||
+          this.$slots.icon ||
+          this.$slots.headerLeft ||
+          this.$slots.headerRight ||
+          this.$slots.subActions
+      );
+    },
+    resolvedImgAlt() {
+      if (this.imgAlt) return this.imgAlt;
+      return this.title ? "" : "Panel image";
+    },
     spanVal() {
-      return this.span === "all" ? "1/-1" : `span ${this.span}`;
+      if (this.span === "all") return "1 / -1";
+      return this.span && String(this.span) !== "1"
+        ? `span ${this.span}`
+        : undefined;
+    },
+    rootStyle() {
+      const style = {};
+      if (this.backgroundColor) style.backgroundColor = this.backgroundColor;
+      if (this.spanVal) style.gridColumn = this.spanVal;
+      return style;
+    },
+    bgImageStyle() {
+      const escaped = String(this.backgroundImage).replace(/"/g, '\\"');
+      const style = {
+        backgroundImage: `url("${escaped}")`,
+      };
+      if (this.backgroundImageSize) {
+        style.backgroundSize = `${this.backgroundImageSize}px`;
+      }
+      return style;
+    },
+    captionIsExternal() {
+      return Boolean(
+        this.caption && (this.caption.ext === "_blank" || this.caption.linkExt)
+      );
+    },
+    footerIsExternal() {
+      return Boolean(
+        this.footer && (this.footer.ext === "_blank" || this.footer.linkExt)
+      );
     },
     showScrollDown() {
-      return this.scroll && !this.contentScrolledBottom && this.contentScrollY;
+      return (
+        this.scrollHint &&
+        this.scroll &&
+        !this.contentScrolledBottom &&
+        this.contentScrollY
+      );
     },
     showScrollUp() {
-      return this.scroll && !this.contentScrolledTop && this.contentScrollY;
+      return (
+        this.scrollHint &&
+        this.scroll &&
+        !this.contentScrolledTop &&
+        this.contentScrollY
+      );
     },
     showScrollLeft() {
-      return this.scroll && !this.contentScrolledLeft && this.contentScrollX;
+      return (
+        this.scrollHint &&
+        this.scroll &&
+        !this.contentScrolledLeft &&
+        this.contentScrollX
+      );
     },
     showScrollRight() {
-      return this.scroll && !this.contentScrolledRight && this.contentScrollX;
+      return (
+        this.scrollHint &&
+        this.scroll &&
+        !this.contentScrolledRight &&
+        this.contentScrollX
+      );
     },
   },
+  mounted() {
+    if (this.scrollHint) {
+      this.setScrollHints();
+      if (typeof ResizeObserver !== "undefined" && this.$refs.contentRef) {
+        this.resizeObserver = new ResizeObserver(() => this.setScrollHints());
+        this.resizeObserver.observe(this.$refs.contentRef);
+      } else if (typeof window !== "undefined") {
+        window.addEventListener("resize", this.setScrollHints, { passive: true });
+      }
+    }
+  },
+  unmounted() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+    if (typeof window !== "undefined") {
+      window.removeEventListener("resize", this.setScrollHints);
+    }
+  },
   methods: {
-    nudgeScroll: function (dir, n) {
+    shouldParse(section) {
+      if (typeof this.parseMarkdown === "boolean") return this.parseMarkdown;
+      const pm = String(this.parseMarkdown || "");
+      return pm === "*" || pm.includes(section);
+    },
+    nudgeScroll(dir, direction) {
       this.$nextTick(() => {
-        const c = this.$refs.content;
-        if (dir === "x") this.$refs.content.scrollLeft += c.clientWidth * n;
-        if (dir === "y") this.$refs.content.scrollTop += c.clientHeight * n;
+        const c = this.$refs.contentRef;
+        if (!c) return;
+        if (dir === "x") c.scrollLeft += c.clientWidth * 0.8 * direction;
+        if (dir === "y") c.scrollTop += c.clientHeight * 0.8 * direction;
       });
     },
-    setScrollHints: function () {
+    setScrollHints() {
       this.$nextTick(() => {
-        const c = this.$refs.content;
-        this.contentScrollX = c.scrollWidth > c.clientWidth;
-        this.contentScrollY = c.scrollHeight > c.clientHeight;
+        const c = this.$refs.contentRef;
+        if (!c) return;
+        this.contentScrollX = c.scrollWidth > c.clientWidth + 1;
+        this.contentScrollY = c.scrollHeight > c.clientHeight + 1;
         this.contentScrolledLeft = c.scrollLeft < 1;
         this.contentScrolledRight =
-          Math.abs(c.scrollWidth - c.clientWidth - c.scrollLeft) < 1;
+          Math.abs(c.scrollWidth - c.clientWidth - c.scrollLeft) < 2;
         this.contentScrolledTop = c.scrollTop < 1;
         this.contentScrolledBottom =
-          Math.abs(c.scrollHeight - c.clientHeight - c.scrollTop) < 1;
+          Math.abs(c.scrollHeight - c.clientHeight - c.scrollTop) < 2;
       });
     },
   },
 };
 </script>
 
-<style lang="scss" scoped>
-.panel {
+<style scoped>
+.js-panel {
+  position: relative;
   display: flex;
   flex-direction: column;
-  min-width: 280px;
-  flex: 1;
-  line-height: normal;
-  letter-spacing: normal;
-  background-color: #f8f9fa;
-  border-radius: 1em;
+  width: 100%;
+  min-width: 0;
+  font-family: var(--js-font-family);
+  line-height: var(--js-line-height);
+  color: var(--js-color-text);
+  background-color: var(--js-color-surface);
+  border: 1px solid var(--js-color-border);
+  border-radius: var(--js-radius-lg);
   text-align: left;
-  position: relative;
+}
 
-  &.panel-hover {
-    .action {
-      opacity: 0;
-    }
-    &:hover .action {
-      opacity: 1;
-    }
-  }
-  &.panel-cover-link {
-    overflow: hidden;
-    ::deep(.action) {
-      > a {
-        border: 2px solid red;
-      }
-    }
-    .action > a:before {
-      border: 1px solid blue;
-      content: "";
-      position: absolute;
-      top: -1600%;
-      left: -20%;
-      bottom: 100%;
-      right: -20%;
-      /* background: rgba(255, 0, 0, 0.2); */
-    }
-    .action.panel-nav-item-circle > a:before {
-      top: -200%;
-      left: -200%;
-      bottom: -200%;
-      right: -200%;
-    }
-  }
-  .above {
-    position: absolute;
-    z-index: 2;
-    top: 0;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #fff;
-    border-radius: 100px;
-    border: 0.15em solid;
-    border-color: #fff;
-    .note {
-      display: block;
-      padding: 0.15em 1.25em;
-      font-weight: 500;
-      font-size: 0.95em;
-    }
-  }
-  .title,
-  .content,
-  .caption,
-  .below-text {
-    padding: 1em 1.2em;
-    position: relative;
-  }
-  .header {
-    padding: 0 1.2em;
-    border-radius: 1em 1em 0 0;
-    overflow: hidden;
-  }
-  .title {
-    display: flex;
-    gap: 0.75em;
-    align-items: center;
-    background: #eee;
-    /* background: #e1effc; */
-    /* background: #e5f9ff; */
-    border-radius: 1em 1em 0 0;
-    z-index: 1;
-    .text {
-      display: flex;
-      gap: 0.75em;
-      align-items: center;
-      flex: 1;
+.js-panel--hover .js-panel__action {
+  opacity: 0;
+}
 
-      > .icn {
-        font-size: 1.4em;
-      }
-      > .label {
-        min-width: 7em;
-        margin: 0;
-        font-size: 1.2em;
-      }
-      .thumb {
-        width: 3em;
-        min-width: 3em;
-        border-radius: 0.25em;
-        overflow: hidden;
-        display: block;
-        position: relative;
-        background: #666;
-        img {
-          width: 100%;
-          height: auto;
-          display: block;
-          transition: all 0.3s;
-        }
-      }
-    }
+.js-panel--hover:hover .js-panel__action,
+.js-panel--hover:focus-within .js-panel__action {
+  opacity: 1;
+}
 
-    .sub-actions,
-    .header-left,
-    .header-right {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5em;
-      align-items: center;
-    }
-    .sub-actions,
-    .header-right {
-      margin-left: auto;
-    }
-    .header-left {
-      margin-right: auto;
-    }
-    &.title-sm .text {
-      gap: 0.5em;
-      > .icn {
-        font-size: 1em;
-      }
-      .label {
-        font-size: 1em;
-      }
-      .thumb {
-        width: 2em;
-        min-width: 2em;
-        border-radius: 0.15em;
-      }
-    }
-    &.title-dark,
-    &.title-dark.title-transparent {
-      color: #222;
-    }
-    &.title-transparent {
-      background: none;
-      padding-bottom: 0;
-      color: #fff;
-    }
-    &.title-transparent + .above-text {
-      padding-top: 0.75em;
-    }
-  }
-  .above-text {
-    display: flex;
-    justify-content: space-between;
-    margin: 0 1.25em 0.25em 1.25em;
-    .banner,
-    .notify {
-      color: #222;
-      font-weight: 500;
-      padding: 0;
-      font-size: 0.95em;
-      position: relative;
-    }
-    .banner {
-      flex: 1;
-      &.banner-dark {
-        color: #fff;
-      }
-    }
-    .notify {
-      margin-left: auto;
-      text-align: right;
-      font-style: italic;
+.js-panel--cover-link {
+  overflow: hidden;
+}
 
-      &.notify-dark {
-        color: #fff;
-      }
-      .icn {
-        font-size: 0.8em;
-      }
-    }
-  }
-  :not(.title-transparent) + .above-text {
-    margin-top: 1em;
-  }
-  .above + .content-wrap {
-    margin-top: 1em;
-  }
-  .content-wrap {
-    position: relative;
-    padding-top: 1em;
-    flex: 1;
-    .scroll-btn {
-      position: absolute;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 2em;
-      height: 2em;
-      border-radius: 1em;
-      text-decoration: none;
-      z-index: 3;
-      opacity: 0;
-      transition: 0.3s all;
-      &:hover {
-        background: rgba(255, 255, 255, 0.3);
-        .icn {
-          background: #000;
-        }
-      }
-      .icn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 1.8em;
-        height: 1.8em;
-        border-radius: 0.75em;
-        backdrop-filter: blur(3px);
-        background: rgba(0, 0, 0, 0.6);
-        box-shadow: 0px 2px 7px 3px rgba(255, 255, 255, 0.7);
-        color: #fff;
-      }
-    }
-    .scroll-btn-right,
-    .scroll-btn-left {
-      height: 5em;
-      top: 50%;
-      .icn {
-        width: 1em;
-      }
-    }
-    .scroll-btn-down,
-    .scroll-btn-up {
-      width: 5em;
-      left: 50%;
-      .icn {
-        height: 1em;
-      }
-    }
-    .scroll-btn-right {
-      right: 0.25em;
-      transform: translate(-25%, -50%);
-    }
-    .scroll-btn-left {
-      left: 0.25em;
-      transform: translate(25%, -50%);
-    }
-    .scroll-btn-down {
-      bottom: 0;
-      transform: translate(-50%, -25%);
-    }
-    .scroll-btn-up {
-      top: 0.25em;
-      transform: translate(-50%, 25%);
-    }
-  }
-  .content,
-  .content-md {
-    min-height: 1em;
-    max-height: 220px;
-    /* overflow: auto; */
-    scroll-behavior: smooth;
-    padding-top: 0;
-    &.content-hide-scrollbars {
-      -ms-overflow-style: none; /* for Internet Explorer, Edge */
-      scrollbar-width: none; /* for Firefox */
-      overflow-y: scroll;
-    }
-    &.content-no-scroll {
-      max-height: unset;
-      overflow-y: unset;
-    }
-    &.content-hide-scrollbars::-webkit-scrollbar {
-      display: none; /* for Chrome, Safari, and Opera */
-    }
-    &.content-sm {
-      min-height: 40px;
-      max-height: 80px;
-    }
-    &.content-lg {
-      min-height: 140px;
-      max-height: 350px;
-    }
-    &.content-xl {
-      min-height: 240px;
-      max-height: 400px;
-    }
-    &.content-auto {
-      max-height: unset;
-    }
-    &.content-tab {
-      display: none;
-    }
-    &.content-tab-active {
-      display: block;
-    }
-    &.content-scroll-x {
-      display: flex;
-    }
-    .hit {
-      width: 1px;
-      height: 1px;
-    }
-  }
-  .action {
-    margin: 0.5em;
-    transition: all 0.5s;
+.js-panel--cover-link .js-panel__action :deep(.js-nav-item__trigger)::before {
+  content: "";
+  position: absolute;
+  inset: -100vh -100vw;
+}
 
-    &.action-hidden,
-    &.action-hover {
-      opacity: 0;
-    }
-    &.action-centered {
-      flex-direction: column;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      margin: 0;
-    }
+.js-panel__above {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--js-color-surface);
+  border: 2px solid var(--js-color-border);
+  border-radius: var(--js-radius-pill);
+  padding: 0.15rem 0.9rem;
+  font-size: var(--js-font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: calc(100% - 2rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.js-panel__bg {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.js-panel__bg-img {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  transition: transform 320ms ease;
+}
+
+.js-panel:hover .js-panel__bg-img--zoom {
+  transform: scale(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js-panel__bg-img {
+    transition: none;
   }
-  &:not(.panel-hover) .action {
-    animation: fadeIn 0.5s ease-out;
-  }
-  .caption {
-    text-decoration: none;
-    transition: all 0.25s;
-    display: flex;
-    .text {
-      color: #222;
-      font-size: 0.85em;
-      border-radius: 20px;
-      padding: 0.15em 0.75em;
-      background: rgba(255, 255, 255, 0.5);
-    }
-    &:hover,
-    &:active,
-    &:focus {
-      color: blue;
-    }
-    &.caption-dark .text {
-      color: #fff;
-      background: rgba(0, 0, 0, 0.3);
-    }
-  }
-  .footer {
-    display: block;
-    font-size: 0.9em;
-    font-weight: 500;
-    border-radius: 20px;
-    padding: 1em 1.2em;
-    text-align: center;
-    a {
-      color: #2783a8;
-      text-decoration: none;
-      &:hover {
-        color: darken(#2783a8, 20);
-      }
-    }
-  }
-  .bg {
-    position: absolute;
-    border-radius: 1em;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow: hidden;
-    .bg-cover-img {
-      position: absolute;
-      transition: all 0.25s ease-in-out;
-      transform-origin: center;
-      border-radius: 1em;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-size: cover;
-      background-position: center 0;
-      background-repeat: no-repeat;
-      &:after {
-        content: "";
-        position: absolute;
-        top: 0px;
-        bottom: 0px;
-        left: 0px;
-        right: 0px;
-        border-radius: 1em;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        /* box-shadow: inset 0px 0 0.8em 0px rgba(0, 0, 0, 0.2); */
-      }
-      &.bg-cover-img-left {
-        background-position: left 0;
-      }
-      &.bg-cover-img-right {
-        background-position: right 0;
-      }
-      &.bg-cover-img-padded {
-        top: 20px;
-        left: 20px;
-        right: 20px;
-        bottom: 20px;
-        background-size: contain;
-      }
-      &.bg-cover-img-centered {
-        background-position: center center;
-      }
-      &.bg-cover-img-shade-top {
-        &:after {
-          content: "";
-          position: absolute;
-          left: -2em;
-          right: -2em;
-          box-shadow: inset 0px 0 0.8em 0px rgba(0, 0, 0, 0.2),
-            inset 0px 3em 3.3em 0px rgb(0 0 0 / 70%);
-        }
-      }
-    }
-  }
-  &.panel-compact {
-    > .title,
-    > .content-wrap {
-      padding-top: 0.5em;
-      .content {
-        padding-left: 0.6em;
-        padding-right: 0.6em;
-        padding-bottom: 0.5em;
-      }
-    }
-  }
-  &:hover {
-    > .content-wrap {
-      > .scroll-btn {
-        opacity: 1;
-      }
-      > .scroll-btn-up {
-        transform: translate(-50%, 0);
-      }
-      > .scroll-btn-down {
-        transform: translate(-50%, 0);
-      }
-      > .scroll-btn-left {
-        transform: translate(0, -50%);
-      }
-      > .scroll-btn-right {
-        transform: translate(0, -50%);
-      }
-    }
-    > .bg .bg-cover-img-zoom {
-      /* background-position-y: 5px; */
-      transform: scale(1.05);
-    }
-    > .action-hover {
-      opacity: 1;
-    }
+
+  .js-panel:hover .js-panel__bg-img--zoom {
+    transform: none;
   }
 }
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
+
+.js-panel__bg-img--left {
+  background-position: left top;
+}
+
+.js-panel__bg-img--right {
+  background-position: right top;
+}
+
+.js-panel__bg-img--centered {
+  background-position: center center;
+}
+
+.js-panel__bg-img--padded {
+  inset: var(--js-space-4);
+  background-size: contain;
+}
+
+.js-panel__bg-img--shade-top::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.65) 0%,
+    rgba(0, 0, 0, 0.15) 45%,
+    transparent 100%
+  );
+}
+
+.js-panel__custom-header {
+  position: relative;
+  z-index: 1;
+  border-radius: var(--js-radius-lg) var(--js-radius-lg) 0 0;
+  overflow: hidden;
+}
+
+.js-panel__title {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--js-space-3);
+  padding: var(--js-space-3) var(--js-space-4);
+  background-color: var(--js-color-surface-alt);
+  border-bottom: 1px solid var(--js-color-divider);
+  border-radius: var(--js-radius-lg) var(--js-radius-lg) 0 0;
+}
+
+.js-panel__title--transparent {
+  background-color: transparent;
+  border-bottom-color: transparent;
+  color: var(--js-color-text-inverse);
+}
+
+.js-panel__title--dark,
+.js-panel__title--dark.js-panel__title--transparent {
+  color: var(--js-color-text);
+}
+
+.js-panel__heading-group {
+  display: flex;
+  align-items: center;
+  gap: var(--js-space-3);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.js-panel__icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.25em;
+  flex-shrink: 0;
+}
+
+.js-panel__thumb {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--js-radius-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+  background-color: var(--js-color-surface-hover);
+}
+
+.js-panel__thumb > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.js-panel__heading {
+  margin: 0;
+  font-size: var(--js-font-size-lg);
+  font-weight: 700;
+  line-height: 1.25;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.js-panel__title--sm .js-panel__heading {
+  font-size: var(--js-font-size-md);
+}
+
+.js-panel__title--sm .js-panel__thumb {
+  width: 2rem;
+  height: 2rem;
+}
+
+.js-panel__title--lg .js-panel__heading {
+  font-size: var(--js-font-size-xl);
+}
+
+.js-panel__header-left,
+.js-panel__header-right,
+.js-panel__sub-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--js-space-2);
+}
+
+.js-panel__header-right,
+.js-panel__sub-actions {
+  margin-inline-start: auto;
+}
+
+.js-panel__above-text {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--js-space-2);
+  padding: var(--js-space-2) var(--js-space-4) 0;
+  font-size: var(--js-font-size-sm);
+  font-weight: 500;
+}
+
+.js-panel__banner--dark,
+.js-panel__notify--dark {
+  color: var(--js-color-text-inverse);
+}
+
+.js-panel__notify {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--js-space-1);
+  margin-inline-start: auto;
+  font-style: italic;
+}
+
+.js-panel__content-wrap {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.js-panel__content {
+  padding: var(--js-space-4);
+  scroll-behavior: smooth;
+  overflow: auto;
+}
+
+.js-panel__content--sm {
+  min-height: 3rem;
+  max-height: 7rem;
+}
+
+.js-panel__content--md {
+  min-height: 3rem;
+  max-height: 15rem;
+}
+
+.js-panel__content--lg {
+  min-height: 8rem;
+  max-height: 22rem;
+}
+
+.js-panel__content--xl {
+  min-height: 12rem;
+  max-height: 28rem;
+}
+
+.js-panel__content--auto,
+.js-panel__content--no-scroll {
+  max-height: none;
+  overflow: visible;
+}
+
+.js-panel__content--hide-scrollbars {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.js-panel__content--hide-scrollbars::-webkit-scrollbar {
+  display: none;
+}
+
+.js-panel__scroll-btn {
+  position: absolute;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: var(--js-radius-pill);
+  background-color: rgba(15, 23, 42, 0.72);
+  color: var(--js-color-text-inverse);
+  box-shadow: var(--js-shadow-sm);
+  cursor: pointer;
+  transition: background-color var(--js-transition-fast),
+    opacity var(--js-transition-fast);
+}
+
+.js-panel__scroll-btn:hover {
+  background-color: rgba(15, 23, 42, 0.92);
+}
+
+.js-panel__scroll-btn:focus-visible {
+  outline: var(--js-focus-ring);
+  outline-offset: var(--js-focus-offset);
+}
+
+.js-panel__scroll-btn--up {
+  top: var(--js-space-2);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.js-panel__scroll-btn--down {
+  bottom: var(--js-space-2);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.js-panel__scroll-btn--left {
+  left: var(--js-space-2);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.js-panel__scroll-btn--right {
+  right: var(--js-space-2);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.js-panel__action {
+  position: relative;
+  z-index: 1;
+  margin: var(--js-space-2) var(--js-space-4);
+  transition: opacity var(--js-transition-base);
+}
+
+.js-panel__action--centered {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+}
+
+.js-panel__caption {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  padding: 0 var(--js-space-4) var(--js-space-3);
+  text-decoration: none;
+}
+
+.js-panel__caption-text {
+  font-size: var(--js-font-size-sm);
+  color: var(--js-color-text);
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 0.2rem 0.75rem;
+  border-radius: var(--js-radius-pill);
+}
+
+.js-panel__caption--dark .js-panel__caption-text {
+  color: var(--js-color-text-inverse);
+  background-color: rgba(15, 23, 42, 0.65);
+}
+
+.js-panel__caption:focus-visible {
+  outline: var(--js-focus-ring);
+  outline-offset: var(--js-focus-offset);
+}
+
+.js-panel__footer {
+  position: relative;
+  z-index: 1;
+  padding: var(--js-space-3) var(--js-space-4);
+  border-top: 1px solid var(--js-color-divider);
+  text-align: center;
+  font-size: var(--js-font-size-sm);
+  font-weight: 500;
+}
+
+.js-panel__footer-link,
+.js-panel__footer-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--js-space-2);
+}
+
+.js-panel__footer-link {
+  color: var(--js-color-primary);
+  text-decoration: none;
+}
+
+.js-panel__footer-link:hover {
+  color: var(--js-color-primary-hover);
+  text-decoration: underline;
+}
+
+.js-panel__footer-link:focus-visible {
+  outline: var(--js-focus-ring);
+  outline-offset: var(--js-focus-offset);
+  border-radius: 2px;
+}
+
+.js-panel--compact .js-panel__title,
+.js-panel--compact .js-panel__content,
+.js-panel--compact .js-panel__footer {
+  padding: var(--js-space-2) var(--js-space-3);
+}
+
+@media (max-width: 640px) {
+  .js-panel {
+    grid-column: 1 / -1;
   }
 }
 </style>

@@ -1,231 +1,251 @@
 <template>
   <nav
     :class="[
-      'panel-nav',
-      'panel-nav-' + (theme || 'notheme'),
-      'panel-nav-' + size,
+      'js-panel-nav',
+      'js-panel-nav--' + (theme || 'notheme'),
+      size ? 'js-panel-nav--' + size : '',
     ]"
+    :aria-label="ariaLabel"
   >
-    <div v-if="menu">
-      <JsBtnSplit size="sm" :items="menuConfigButtons" />
-    </div>
-    <div v-if="showSearch" class="search">
-      <div v-if="searchOpen" :class="['input', { active: searchOpen }]">
-        <i class="icn fas fa-search"></i>
-        <input
-          :placeholder="'Search ' + itemUnits"
-          id="panelNavQ"
-          type="text"
-          v-model="q"
-          ref="filterQ"
-        />
-        <label
-          :class="{ none: count == 0 }"
-          v-if="q.length && count > 0 && count <= total"
-          for="panelNavQ"
-          >{{ count }}</label
+    <div v-if="menu || showSearch" class="js-panel-nav__toolbar">
+      <JsBtnSplit
+        v-if="menu"
+        size="sm"
+        aria-label="View layout options"
+        :items="menuConfigButtons"
+      />
+
+      <div v-if="showSearch" class="js-panel-nav__search" role="search">
+        <div v-if="searchOpen" class="js-panel-nav__search-box">
+          <JsIcon name="search" class="js-panel-nav__search-icon" />
+          <input
+            :id="searchId"
+            ref="filterRef"
+            v-model="query"
+            type="search"
+            class="js-panel-nav__search-input"
+            :placeholder="'Search ' + itemUnits"
+            :aria-label="'Search ' + itemUnits"
+            @input="$emit('search', query)"
+          />
+          <output
+            v-if="trimmedQuery.length > 0"
+            :for="searchId"
+            aria-live="polite"
+            :class="[
+              'js-panel-nav__search-count',
+              { 'js-panel-nav__search-count--empty': count === 0 },
+            ]"
+          >
+            {{ count }}
+          </output>
+          <button
+            type="button"
+            class="js-panel-nav__search-clear"
+            :aria-label="query.length ? 'Clear search query' : 'Close search'"
+            @click="clearSearch"
+          >
+            <JsIcon name="close" />
+          </button>
+        </div>
+        <button
+          v-else
+          type="button"
+          class="js-panel-nav__search-trigger"
+          @click="openSearch"
         >
-        <button @click="clear" class="clear" type="button">
-          <i class="icn fas fa-times"></i>
+          <JsIcon name="search" />
+          <span>Search {{ itemUnits }}</span>
         </button>
       </div>
-      <button v-else @click="activate" type="button" class="activate">
-        <i class="icn fas fa-search"></i> Search {{ itemUnits }}
-      </button>
     </div>
-    <div v-if="count" class="items">
-      <div v-if="grouped" class="grouped">
-        <div
+
+    <div v-if="count > 0" class="js-panel-nav__items">
+      <div v-if="grouped" class="js-panel-nav__grouped">
+        <section
           v-for="(group, key) in filteredItems"
-          :key="group.id || key"
+          :key="key"
           :class="[
-            'group',
-            { 'group-labels-left': groupLabelsLeft },
-            { 'group-labels-hidden': groupLabelsHidden },
+            'js-panel-nav__group',
+            { 'js-panel-nav__group--labels-left': groupLabelsLeft },
+            { 'js-panel-nav__group--labels-hidden': groupLabelsHidden },
           ]"
         >
-          <div v-if="key.length" class="groupLabel">
+          <div v-if="String(key).length > 0" class="js-panel-nav__group-label">
             <JsMarkdown
-              :parse="parseMarkdown.match(/group|\*/)"
+              :parse="shouldParse('group')"
               :val="getGroupLabel(key, group.length)"
             />
           </div>
-          <div
-            :class="[
-              'layout',
-              'layout-' + layout,
-              'layout-gap-' + layoutGap,
-              { 'layout-compact': layoutCompact },
-              { 'layout-cols-1': columns === '1' },
-              { 'layout-cols-2': columns === '2' },
-              { 'layout-cols-3': columns === '3' },
-              { 'layout-cols-4': columns === '4' },
-              { 'layout-cols-5': columns === '5' },
-              { 'layout-rows': !grid },
-              { 'layout-rows-right': layoutRight },
-            ]"
-          >
-            <template v-for="(item, j) in group">
-              <div class="hdr" v-if="item.header" :key="item.id || j">
-                <JsMarkdown :val="item.label" />
+
+          <div :class="layoutClasses">
+            <template v-for="(item, j) in group" :key="item.id != null ? item.id : j">
+              <div v-if="item.header" class="js-panel-nav__hdr">
+                <JsMarkdown :parse="shouldParse('header')" :val="item.label" />
               </div>
-              <div
-                v-else-if="
-                  item.divider &&
-                  ['cols-1', 'row', 'space-first', 'space-last'].includes(
-                    layout
-                  )
-                "
+
+              <hr
+                v-else-if="item.divider && supportsDivider"
                 :class="[
-                  'divider',
-                  {
-                    'divider-v': ['row', 'space-first', 'space-last'].includes(
-                      layout
-                    ),
-                  },
+                  'js-panel-nav__divider',
+                  { 'js-panel-nav__divider--vertical': isVerticalDivider },
                 ]"
-                :key="item.id || j"
-              ></div>
-              <JsBtnSplit
-                v-if="item.split && item.items"
-                :items="item.items"
-                :theme="item.theme || theme"
-                :circle="item.circle || circle"
-                :thumb="item.thumb || thumb"
-                :size="item.size || size"
-                :grow="item.splitGrow || splitGrow"
-                :dropRight="item.dropRight || dropRight"
-                :dropSize="item.dropSize || dropSize"
-                :dropTheme="item.dropTheme || dropTheme"
-                :parseMarkdown="item.parseMarkdown || parseMarkdown"
-                :spaced="item.spaced"
-                :key="item.id || j"
               />
-              <JsPanelNavItem
-                v-else
-                :key="item.id || j"
+
+              <JsBtnSplit
+                v-else-if="item.split && Array.isArray(item.items)"
+                :items="item.items"
+                :theme="item.theme || theme || 'light'"
+                :circle="Boolean(item.circle || activeCircle)"
+                :thumb="Boolean(item.thumb || activeThumb)"
+                :size="item.size || size || 'md'"
+                :grow="item.splitGrow || splitGrow || 'none'"
+                :drop-right="item.dropRight !== undefined ? item.dropRight : dropRight"
+                :drop-size="item.dropSize || dropSize || 'auto'"
+                :drop-theme="item.dropTheme || dropTheme || 'dark'"
+                :parse-markdown="item.parseMarkdown || parseMarkdown"
+                :spaced="Boolean(item.spaced)"
+                @click="onItemClick"
+              />
+
+              <JsNavItem
+                v-else-if="!item.header && !item.divider"
                 :item="item"
-                :theme="item.theme || theme"
-                :circle="item.circle || circle"
-                :thumb="item.thumb || thumb"
-                :size="item.size || size"
-                :dropRight="item.dropRight || dropRight"
-                :dropTabs="item.dropTabs || dropTabs"
-                :dropTabSelected="item.dropTabSelected"
-                :dropSize="item.dropSize || dropSize"
-                :parseMarkdown="item.parseMarkdown || parseMarkdown"
-                :dropTheme="item.dropTheme || dropTheme"
+                :block="isGridLayout"
+                :theme="item.theme || theme || 'light'"
+                :circle="Boolean(item.circle || activeCircle)"
+                :thumb="Boolean(item.thumb || activeThumb)"
+                :size="item.size || size || 'md'"
+                :drop-right="item.dropRight !== undefined ? item.dropRight : dropRight"
+                :drop-tabs="Boolean(item.dropTabs || dropTabs)"
+                :drop-tab-selected="item.dropTabSelected ?? 0"
+                :drop-size="item.dropSize || dropSize || 'auto'"
+                :drop-theme="item.dropTheme || dropTheme || 'dark'"
+                :parse-markdown="item.parseMarkdown || parseMarkdown"
+                @click="onItemClick"
               />
             </template>
           </div>
-        </div>
+        </section>
       </div>
-      <div
-        v-else
-        :class="[
-          'layout',
-          'layout-' + layout,
-          'layout-gap-' + layoutGap,
 
-          { 'layout-compact': layoutCompact },
-          { 'layout-cols-1': columns === '1' },
-          { 'layout-cols-2': columns === '2' },
-          { 'layout-cols-3': columns === '3' },
-          { 'layout-cols-4': columns === '4' },
-          { 'layout-cols-5': columns === '5' },
-          { 'layout-rows': !grid },
-          { 'layout-rows-right': layoutRight },
-        ]"
-      >
-        <template v-for="(item, i) in filteredItems">
-          <div class="hdr" v-if="item.header" :key="item.id || i">
-            <JsMarkdown :val="item.label" />
+      <div v-else :class="layoutClasses">
+        <template v-for="(item, i) in filteredItems" :key="item.id != null ? item.id : i">
+          <div v-if="item.header" class="js-panel-nav__hdr">
+            <JsMarkdown :parse="shouldParse('header')" :val="item.label" />
           </div>
-          <div
-            v-else-if="
-              item.divider &&
-              ['cols-1', 'row', 'space-first', 'space-last'].includes(layout)
-            "
+
+          <hr
+            v-else-if="item.divider && supportsDivider"
             :class="[
-              'divider',
-              {
-                'divider-v': ['row', 'space-first', 'space-last'].includes(
-                  layout
-                ),
-              },
+              'js-panel-nav__divider',
+              { 'js-panel-nav__divider--vertical': isVerticalDivider },
             ]"
-            :key="item.id || i"
-          ></div>
-          <JsBtnSplit
-            v-else-if="item.split && item.items"
-            :items="item.items"
-            :theme="item.theme || theme"
-            :circle="item.circle || circle"
-            :thumb="item.thumb || thumb"
-            :size="item.size || size"
-            :grow="item.splitGrow || splitGrow"
-            :dropRight="item.dropRight || dropRight"
-            :dropSize="item.dropSize || dropSize"
-            :dropTheme="item.dropTheme || dropTheme"
-            :parseMarkdown="item.parseMarkdown || parseMarkdown"
-            :spaced="item.spaced"
-            :key="item.id || i"
           />
-          <JsPanelNavItem
+
+          <JsBtnSplit
+            v-else-if="item.split && Array.isArray(item.items)"
+            :items="item.items"
+            :theme="item.theme || theme || 'light'"
+            :circle="Boolean(item.circle || activeCircle)"
+            :thumb="Boolean(item.thumb || activeThumb)"
+            :size="item.size || size || 'md'"
+            :grow="item.splitGrow || splitGrow || 'none'"
+            :drop-right="item.dropRight !== undefined ? item.dropRight : dropRight"
+            :drop-size="item.dropSize || dropSize || 'auto'"
+            :drop-theme="item.dropTheme || dropTheme || 'dark'"
+            :parse-markdown="item.parseMarkdown || parseMarkdown"
+            :spaced="Boolean(item.spaced)"
+            @click="onItemClick"
+          />
+
+          <JsNavItem
             v-else-if="!item.header && !item.divider"
-            :key="item.id || i"
             :item="item"
-            :theme="item.theme || theme"
-            :circle="item.circle || circle"
-            :thumb="item.thumb || thumb"
-            :size="item.size || size"
-            :dropRight="item.dropRight || dropRight"
-            :dropTabs="item.dropTabs || dropTabs"
-            :dropTabSelected="item.dropTabSelected"
-            :dropSize="item.dropSize || dropSize"
-            :dropTheme="item.dropTheme || dropTheme"
-            :parseMarkdown="item.parseMarkdown || parseMarkdown"
+            :block="isGridLayout"
+            :theme="item.theme || theme || 'light'"
+            :circle="Boolean(item.circle || activeCircle)"
+            :thumb="Boolean(item.thumb || activeThumb)"
+            :size="item.size || size || 'md'"
+            :drop-right="item.dropRight !== undefined ? item.dropRight : dropRight"
+            :drop-tabs="Boolean(item.dropTabs || dropTabs)"
+            :drop-tab-selected="item.dropTabSelected ?? 0"
+            :drop-size="item.dropSize || dropSize || 'auto'"
+            :drop-theme="item.dropTheme || dropTheme || 'dark'"
+            :parse-markdown="item.parseMarkdown || parseMarkdown"
+            @click="onItemClick"
           />
         </template>
       </div>
     </div>
-    <div
-      :class="['empty', 'empty-' + emptySize]"
-      v-else-if="search || (!search && total == 0)"
+
+    <p
+      v-else-if="search || total === 0"
+      :class="['js-panel-nav__empty', 'js-panel-nav__empty--' + emptySize]"
+      role="status"
     >
-      No {{ itemUnits }}
-    </div>
+      <slot name="empty">No {{ itemUnits }}</slot>
+    </p>
+
     <div
-      class="limited"
-      v-if="!ignoreItemsLimit && itemsLimit && this.items.length > itemsLimit"
+      v-if="!ignoreItemsLimit && itemsLimit && total > itemsLimit"
+      class="js-panel-nav__limited"
     >
-      <JsPanelNavItem :item="{ label: 'Load All', onClick: removeItemsLimit }">
-      </JsPanelNavItem>
+      <JsNavItem
+        :item="{ label: loadAllLabel, button: 'button', onClick: removeItemsLimit }"
+        theme="lightblue"
+        size="sm"
+      />
     </div>
   </nav>
 </template>
 
 <script>
+import JsIcon from "./Icon.vue";
 import JsMarkdown from "./Markdown.vue";
 import JsBtnSplit from "./BtnSplit.vue";
-import JsPanelNavItem from "./NavItem.vue/index.js";
+import JsNavItem from "./NavItem.vue";
+import { createUid } from "../utils/uid.js";
+import { findInObject } from "../utils/search.js";
+
+const VALID_LAYOUTS = [
+  "cols-auto",
+  "cols-1",
+  "cols-2",
+  "cols-3",
+  "cols-4",
+  "cols-5",
+  "row",
+  "rows",
+  "rows-right",
+  "spaced",
+  "centered",
+  "space-first",
+  "space-last",
+];
 
 export default {
   name: "JsPanelNav",
   components: {
+    JsIcon,
     JsMarkdown,
     JsBtnSplit,
-    JsPanelNavItem,
+    JsNavItem,
   },
-  data() {
-    return {
-      q: "",
-      searchOpen: false,
-      ignoreItemsLimit: false,
-    };
+  inject: {
+    jsPanelRefreshScroll: {
+      default: null,
+    },
   },
   props: {
-    menu: Boolean,
+    ariaLabel: {
+      type: String,
+      default: "Navigation",
+    },
+    menu: {
+      type: Boolean,
+      default: false,
+    },
     menuConfig: {
       type: Array,
       default: () => [
@@ -233,13 +253,18 @@ export default {
         {
           button: { icon: "table-cells", tip: "Grid View" },
           layout: "cols-auto",
-          size: "lg",
           style: "thumb",
         },
       ],
     },
-    grouped: Boolean,
-    search: Boolean,
+    grouped: {
+      type: Boolean,
+      default: false,
+    },
+    search: {
+      type: Boolean,
+      default: false,
+    },
     searchMinCount: {
       type: Number,
       default: 2,
@@ -269,44 +294,47 @@ export default {
       type: String,
       default: "items",
     },
-    items: Array,
+    items: {
+      type: Array,
+      default: () => [],
+    },
     itemsLimit: {
       type: Number,
       default: null,
     },
-    parseMarkdown: {
+    loadAllLabel: {
       type: String,
+      default: "Load All",
+    },
+    parseMarkdown: {
+      type: [Boolean, String],
       default: "",
     },
     groupBy: {
       type: String,
       default: "group",
     },
-    groupLabelsHidden: Boolean,
-    groupLabelsLeft: Boolean,
-    groupLabelShowCount: Boolean,
-    groupLabelsLarge: Boolean,
-    grid: { type: Boolean, default: true },
-    spaced: Boolean,
+    groupLabelsHidden: {
+      type: Boolean,
+      default: false,
+    },
+    groupLabelsLeft: {
+      type: Boolean,
+      default: false,
+    },
+    groupLabelShowCount: {
+      type: Boolean,
+      default: false,
+    },
+    grid: {
+      type: Boolean,
+      default: true,
+    },
     layout: {
       type: String,
       default: "cols-auto",
       validator(v) {
-        return [
-          "cols-auto",
-          "cols-1",
-          "cols-2",
-          "cols-3",
-          "cols-4",
-          "cols-5",
-          "row",
-          "rows",
-          "rows-right",
-          "spaced",
-          "centered",
-          "space-first",
-          "space-last",
-        ].includes(v);
+        return VALID_LAYOUTS.includes(v);
       },
     },
     layoutGap: {
@@ -323,428 +351,522 @@ export default {
         return ["sm", "md", "lg"].includes(v);
       },
     },
-    layoutRight: { type: Boolean, default: false },
-    layoutCompact: { type: Boolean, default: false },
-    size: String,
-    theme: String,
-    split: Boolean,
-    circle: Boolean,
-    thumb: Boolean,
-    splitGrow: String,
-    dropRight: Boolean,
-    dropSplit: Boolean,
-    dropTabs: Boolean,
-    dropSize: String,
-    dropTheme: String,
+    layoutRight: {
+      type: Boolean,
+      default: false,
+    },
+    layoutCompact: {
+      type: Boolean,
+      default: false,
+    },
+    size: {
+      type: String,
+      default: "md",
+    },
+    theme: {
+      type: String,
+      default: "",
+    },
+    circle: {
+      type: Boolean,
+      default: false,
+    },
+    thumb: {
+      type: Boolean,
+      default: false,
+    },
+    splitGrow: {
+      type: String,
+      default: "none",
+    },
+    dropRight: {
+      type: Boolean,
+      default: false,
+    },
+    dropTabs: {
+      type: Boolean,
+      default: false,
+    },
+    dropSize: {
+      type: String,
+      default: "auto",
+    },
+    dropTheme: {
+      type: String,
+      default: "dark",
+    },
+  },
+  emits: ["click", "select", "search", "config-change"],
+  data() {
+    return {
+      searchId: createUid("js-nav-q"),
+      query: "",
+      searchOpen: false,
+      ignoreItemsLimit: false,
+      activeLayout: this.layout,
+      activeCircle: this.circle,
+      activeThumb: this.thumb,
+      activeConfigIndex: -1,
+    };
+  },
+  watch: {
+    layout(val) {
+      this.activeLayout = val;
+    },
+    circle(val) {
+      this.activeCircle = val;
+    },
+    thumb(val) {
+      this.activeThumb = val;
+    },
+    count() {
+      if (typeof this.jsPanelRefreshScroll === "function") {
+        this.jsPanelRefreshScroll();
+      }
+    },
   },
   computed: {
     menuConfigButtons() {
-      return this.menuConfig.map((mC) => ({
+      return this.menuConfig.map((mC, idx) => ({
         ...mC.button,
+        button: "button",
+        active: this.activeConfigIndex === idx,
         config: {
+          index: idx,
           layout: mC.layout || "cols-auto",
-          size: mC.size || "md",
           style: mC.style || "",
         },
         onClick: this.changeConfig,
       }));
     },
-    count() {
-      let count = 0;
-      if (Array.isArray(this.filteredItems)) {
-        count = this.filteredItems.length;
-      } else {
-        for (const key in this.filteredItems) {
-          count += this.filteredItems[key].length;
-        }
-      }
-      return count;
-    },
     total() {
       return this.items.length;
+    },
+    trimmedQuery() {
+      return this.query.trim();
     },
     showSearch() {
       return (
         this.search &&
-        (this.total >= this.searchMinCount || this.trimmedQuery.length)
+        (this.total >= this.searchMinCount || this.trimmedQuery.length > 0)
       );
     },
-    trimmedQuery() {
-      return this.q.trim();
-    },
-
     filteredItems() {
-      let filteredItems = this.items;
+      let list = this.items;
       const q = this.trimmedQuery.toLowerCase();
-      //filter by query
-      if (q.length)
-        filteredItems = this.items.filter((item) => this.findInObject(item, q));
-
-      //enforce item limit
-      if (!this.ignoreItemsLimit && this.itemsLimit)
-        filteredItems = filteredItems.slice(0, this.itemsLimit);
-      //because scrolling size changes when filtering
-      if (this.$parent.setScrollHints) this.$parent.setScrollHints();
-      return this.grouped
-        ? this.groupByKey(filteredItems, this.groupBy)
-        : filteredItems;
+      if (q.length) {
+        list = list.filter((item) =>
+          findInObject(item, q, this.searchableProperties)
+        );
+      }
+      if (!this.ignoreItemsLimit && this.itemsLimit) {
+        list = list.slice(0, this.itemsLimit);
+      }
+      return this.grouped ? this.groupByKey(list, this.groupBy) : list;
     },
-    groupedItems(key) {
-      return this.groupByKey(this.items, key);
+    count() {
+      if (Array.isArray(this.filteredItems)) {
+        return this.filteredItems.length;
+      }
+      return Object.values(this.filteredItems).reduce(
+        (sum, group) => sum + group.length,
+        0
+      );
     },
-    compactLayout() {
-      return this.size === "xs" || this.size === "sm";
+    supportsDivider() {
+      return ["cols-1", "row", "rows", "space-first", "space-last"].includes(
+        this.activeLayout
+      );
+    },
+    isVerticalDivider() {
+      return ["row", "rows", "space-first", "space-last"].includes(
+        this.activeLayout
+      );
+    },
+    isGridLayout() {
+      return (
+        this.grid &&
+        [
+          "cols-auto",
+          "cols-1",
+          "cols-2",
+          "cols-3",
+          "cols-4",
+          "cols-5",
+        ].includes(this.activeLayout)
+      );
+    },
+    layoutClasses() {
+      return [
+        "js-panel-nav__layout",
+        "js-panel-nav__layout--" + this.activeLayout,
+        "js-panel-nav__gap--" + this.layoutGap,
+        { "js-panel-nav__layout--compact": this.layoutCompact },
+        this.columns !== "all" ? "js-panel-nav__layout--cols-" + this.columns : "",
+        { "js-panel-nav__layout--rows": !this.grid },
+        { "js-panel-nav__layout--rows-right": this.layoutRight },
+      ];
     },
   },
   methods: {
+    shouldParse(section) {
+      if (typeof this.parseMarkdown === "boolean") return this.parseMarkdown;
+      const pm = String(this.parseMarkdown || "");
+      return pm === "*" || pm.includes(section);
+    },
     removeItemsLimit() {
       this.ignoreItemsLimit = true;
     },
-    changeConfig(e, item) {
-      item.active = true;
-      this.layout = item.config.layout;
-      // this.size = item.config.size;
-      this.circle = item.config.style === "circle";
-      this.thumb = item.config.style === "thumb";
+    changeConfig(_event, item) {
+      const cfg = item.config;
+      if (!cfg) return;
+      this.activeConfigIndex = cfg.index;
+      this.activeLayout = cfg.layout;
+      this.activeCircle = cfg.style === "circle";
+      this.activeThumb = cfg.style === "thumb";
+      this.$emit("config-change", cfg);
     },
-    groupByKey: function (xs, key) {
-      return xs.reduce(function (rv, x) {
-        (rv[x[key]] = rv[x[key]] || []).push(x);
-        return rv;
+    groupByKey(list, key) {
+      return list.reduce((acc, item) => {
+        const groupKey = item[key] != null ? String(item[key]) : "";
+        if (!acc[groupKey]) acc[groupKey] = [];
+        acc[groupKey].push(item);
+        return acc;
       }, {});
     },
-    findInObject(o, q) {
-      return Object.keys(o).some((a) => {
-        if (
-          Array.isArray(o[a]) ||
-          (typeof o[a] === "object" && o[a] !== null)
-        ) {
-          return this.findInObject(o[a], q);
-        }
-        return typeof o[a] === "string"
-          ? (this.searchableProperties.includes(a) || !isNaN(Number(a))) &&
-              o[a].toLowerCase().includes(q)
-          : false;
-      });
-    },
-    getGroupLabel: function (groupName, groupItemsCount) {
-      if (this.groupLabelShowCount && groupItemsCount > 1)
-        groupName += ` (${groupItemsCount})`;
+    getGroupLabel(groupName, groupItemsCount) {
+      if (this.groupLabelShowCount && groupItemsCount > 1) {
+        return `${groupName} (${groupItemsCount})`;
+      }
       return groupName;
     },
-    activate: function () {
+    openSearch() {
       this.searchOpen = true;
       this.$nextTick(() => {
-        this.$refs.filterQ.focus();
+        if (this.$refs.filterRef) {
+          this.$refs.filterRef.focus();
+        }
       });
     },
-    clear: function () {
-      if (this.q.length) {
-        this.q = "";
+    clearSearch() {
+      if (this.query.length) {
+        this.query = "";
+        this.$emit("search", "");
+        this.$nextTick(() => {
+          if (this.$refs.filterRef) this.$refs.filterRef.focus();
+        });
       } else {
         this.searchOpen = false;
       }
     },
-    pluralize(count, noun, suffix = "s") {
-      return `${count} ${noun}${count !== 1 ? suffix : ""}`;
+    onItemClick(event, item) {
+      this.$emit("click", event, item);
+      this.$emit("select", item, event);
     },
   },
 };
 </script>
-<style lang="scss">
-.panel-nav {
+
+<style scoped>
+.js-panel-nav {
   position: relative;
   display: flex;
   flex-direction: column;
-  .search {
-    display: inline-flex;
-    margin-bottom: 1em;
-    position: sticky;
-    z-index: 1;
-    margin-left: auto;
-    background: #fff;
-    padding: 0 0.25em;
-    border-radius: 0.25em;
-    top: 0;
-    right: 0;
-    button {
-      padding: 0;
-      background: none;
-      border: none;
-      font-family: inherit; /* 1 */
-      font-size: 0.85em; /* 1 */
-      font-weight: 600;
-      line-height: 1.15; /* 1 */
-      margin: 0; /* 2 */
-      overflow: visible;
-      text-transform: none;
-      cursor: pointer;
-      color: #333;
-    }
-    .activate {
-      padding: 0.25em 0;
-      margin-left: auto;
-      .icn {
-        font-size: 0.8em;
-      }
-    }
-    .input {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-radius: 0.25em;
-      padding: 0.25em 0.5em;
-      gap: 0.25em;
-      flex: 1;
-      align-self: flex-end;
-      &.active {
-        align-self: stretch;
-      }
-      .icn {
-        font-size: 0.8em;
-        color: #666;
-        padding: 0 0.5em;
-      }
-      input {
-        width: 100%;
-        flex: 1;
-        border: none;
-        outline: none;
-        padding: 0.25em;
-        font-size: 0.9em;
-        border-radius: 0.5em;
-        background: #fff;
-        background: transparent;
-      }
-      label {
-        font-size: 0.8em;
-        background: #c9ffda;
-        padding: 0 0.5em;
-        border-radius: 5em;
-        white-space: nowrap;
-        color: #666;
-        &.none {
-          background: #ffd0c9;
-        }
-      }
-    }
+  gap: var(--js-space-3);
+  font-family: var(--js-font-family);
+  min-width: 0;
+}
+
+.js-panel-nav__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--js-space-2);
+}
+
+.js-panel-nav__search {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-start: auto;
+  max-width: 100%;
+}
+
+.js-panel-nav__search-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--js-space-2);
+  min-height: var(--js-touch-min);
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--js-color-border);
+  border-radius: var(--js-radius-md);
+  background-color: var(--js-color-surface);
+  color: var(--js-color-text);
+  font: inherit;
+  font-size: var(--js-font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.js-panel-nav__search-trigger:hover {
+  background-color: var(--js-color-surface-hover);
+}
+
+.js-panel-nav__search-trigger:focus-visible,
+.js-panel-nav__search-clear:focus-visible {
+  outline: var(--js-focus-ring);
+  outline-offset: var(--js-focus-offset);
+}
+
+.js-panel-nav__search-box {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--js-space-1);
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--js-color-border-strong);
+  border-radius: var(--js-radius-md);
+  background-color: var(--js-color-surface);
+  color: var(--js-color-text);
+  max-width: 100%;
+}
+
+.js-panel-nav__search-box:focus-within {
+  outline: var(--js-focus-ring);
+  outline-offset: 1px;
+}
+
+.js-panel-nav__search-icon {
+  color: var(--js-color-text-muted);
+}
+
+.js-panel-nav__search-input {
+  width: min(14rem, 55vw);
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--js-font-size-sm);
+  padding: 0.25rem;
+}
+
+.js-panel-nav__search-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--js-radius-pill);
+  font-size: var(--js-font-size-xs);
+  font-weight: 700;
+  background-color: var(--js-color-primary-soft);
+  color: var(--js-color-primary-hover);
+}
+
+.js-panel-nav__search-count--empty {
+  background-color: #fde8e8;
+  color: var(--js-color-danger);
+}
+
+.js-panel-nav__search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: var(--js-radius-sm);
+  background: transparent;
+  color: var(--js-color-text-muted);
+  cursor: pointer;
+}
+
+.js-panel-nav__search-clear:hover {
+  background-color: var(--js-color-surface-hover);
+  color: var(--js-color-text);
+}
+
+/* Groups */
+.js-panel-nav__grouped {
+  display: flex;
+  flex-direction: column;
+  gap: var(--js-space-4);
+}
+
+.js-panel-nav__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--js-space-2);
+}
+
+.js-panel-nav__group--labels-left {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--js-space-4);
+}
+
+.js-panel-nav__group--labels-left .js-panel-nav__layout {
+  flex: 1 1 auto;
+}
+
+.js-panel-nav__group--labels-hidden .js-panel-nav__group-label {
+  display: none;
+}
+
+.js-panel-nav__group-label {
+  font-size: var(--js-font-size-sm);
+  font-weight: 700;
+  color: var(--js-color-text-muted);
+  min-width: 4.5rem;
+}
+
+.js-panel-nav__hdr {
+  grid-column: 1 / -1;
+  font-size: var(--js-font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--js-color-text-muted);
+  padding-top: var(--js-space-2);
+}
+
+.js-panel-nav__divider {
+  grid-column: 1 / -1;
+  border: 0;
+  height: 1px;
+  width: 100%;
+  margin: var(--js-space-1) 0;
+  background-color: var(--js-color-divider);
+}
+
+.js-panel-nav__divider--vertical {
+  width: 1px;
+  height: auto;
+  align-self: stretch;
+  margin: 0.25rem var(--js-space-1);
+}
+
+/* Layouts */
+.js-panel-nav__layout {
+  display: grid;
+  gap: var(--js-space-3);
+  min-width: 0;
+}
+
+.js-panel-nav__gap--sm,
+.js-panel-nav__layout--compact {
+  gap: var(--js-space-2);
+}
+
+.js-panel-nav__gap--lg {
+  gap: var(--js-space-5);
+}
+
+.js-panel-nav__layout--cols-auto {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+  align-items: start;
+}
+
+.js-panel-nav__layout--cols-1 {
+  grid-template-columns: 1fr;
+}
+
+.js-panel-nav__layout--cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.js-panel-nav__layout--cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.js-panel-nav__layout--cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.js-panel-nav__layout--cols-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.js-panel-nav__layout--row,
+.js-panel-nav__layout--rows,
+.js-panel-nav__layout--rows-right,
+.js-panel-nav__layout--spaced,
+.js-panel-nav__layout--centered,
+.js-panel-nav__layout--space-first,
+.js-panel-nav__layout--space-last {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.js-panel-nav__layout--rows-right {
+  justify-content: flex-end;
+}
+
+.js-panel-nav__layout--spaced {
+  justify-content: space-between;
+}
+
+.js-panel-nav__layout--centered {
+  justify-content: center;
+}
+
+.js-panel-nav__layout--space-first > :first-child {
+  margin-inline-end: auto;
+}
+
+.js-panel-nav__layout--space-last > :last-child {
+  margin-inline-start: auto;
+}
+
+/* Empty & limit */
+.js-panel-nav__empty {
+  margin: var(--js-space-5) auto;
+  padding: 0.45rem 1rem;
+  border-radius: var(--js-radius-pill);
+  background-color: var(--js-color-surface-alt);
+  color: var(--js-color-text-muted);
+  font-size: var(--js-font-size-sm);
+  text-align: center;
+}
+
+.js-panel-nav__empty--sm {
+  margin: var(--js-space-2) auto;
+}
+
+.js-panel-nav__empty--lg {
+  margin: var(--js-space-6) auto;
+}
+
+.js-panel-nav__limited {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--js-space-2);
+}
+
+@media (max-width: 768px) {
+  .js-panel-nav__layout--cols-4,
+  .js-panel-nav__layout--cols-5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .empty,
-  .empty-md {
-    margin: 5em 0;
-    background: #efefef;
-    padding: 0.5em 1em;
-    border-radius: 100px;
-    align-self: center;
-    font-size: 0.85em;
-    &.empty-sm {
-      margin: 0.5em 0;
-    }
-    &.empty-lg {
-      margin: 10em 0;
-    }
-  }
-  .limited {
-    padding: 1em;
-    align-self: center;
-  }
-  .grouped {
-    .group {
-      margin-bottom: 1em;
-      align-items: flex-start;
-      .groupLabel {
-        font-size: 0.85em;
-        /* border-bottom: 1px solid #fff; */
-        color: #fff;
-        font-weight: 700;
-        margin-bottom: 0.75em;
-        line-height: 1.1;
-        white-space: nowrap;
-        strong {
-          display: block;
-          font-size: 1.45em;
-          white-space: nowrap;
-        }
-      }
-      &:last-child {
-        margin: 0;
-      }
-    }
-    .group-labels-left {
-      display: flex;
-      gap: 1em;
-      .groupLabel {
-        min-width: 3em;
-      }
-    }
-    .group-labels-hidden .groupLabel {
-      display: none;
-    }
-  }
-  .hdr {
-    color: rgba(0, 0, 0, 0.8);
-    font-size: 0.85em;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    grid-column-start: 1;
-    a {
-      color: #a4d5ff;
-      text-decoration: none;
-    }
-    .tag {
-      color: #222;
-      background: #fff;
-    }
-  }
-  .hdr + .panel-nav-item {
-    grid-column-start: 1;
-  }
-  .divider {
-    height: 1px;
-    margin: 0.35em 0;
-    overflow: hidden;
-    background-color: rgba(0, 0, 0, 0.4);
-    &.divider-v {
-      height: unset;
-      border-radius: 100px;
-      width: 2px;
-      margin: 0.5em 0.2em;
-    }
-  }
-  .divider {
-    background-color: rgba(0, 0, 0, 0.2);
-  }
-  .layout,
-  .layout-gap-md {
-    gap: 0.75em;
-    &.layout-gap-sm,
-    &.layout-compact {
-      gap: 0.5em;
-    }
-    &.layout-gap-lg {
-      gap: 1.5em;
-    }
-    &.layout-cols-auto,
-    &.layout-cols-1,
-    &.layout-cols-2,
-    &.layout-cols-3,
-    &.layout-cols-4,
-    &.layout-cols-5 {
-      display: grid;
-      /* grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); */
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      grid-auto-columns: 1fr;
-      align-items: start;
-      > .panel-nav-item.panel-nav-item-thumb > .item .thumb {
-        width: 100% !important;
-      }
-    }
-    &.layout-cols-1 {
-      grid-template-columns: 1fr;
-    }
-    &.layout-cols-2 {
-      grid-template-columns: 1fr 1fr;
-    }
-    &.layout-cols-3 {
-      grid-template-columns: 1fr 1fr 1fr;
-    }
-    &.layout-cols-4 {
-      grid-template-columns: 1fr 1fr 1fr 1fr;
-    }
-    &.layout-cols-5 {
-      grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-    }
-    &.layout-row,
-    &.layout-rows,
-    &.layout-rows-right,
-    &.layout-spaced,
-    &.layout-centered,
-    &.layout-space-first,
-    &.layout-space-last {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: stretch;
-      > .panel-nav-item-xs {
-        max-width: 12em;
-      }
-      > .panel-nav-item-sm {
-        max-width: 16em;
-      }
-      > .panel-nav-item-md {
-        max-width: 20em;
-      }
-      > .panel-nav-item-lg {
-        max-width: 28em;
-      }
-      > .panel-nav-item-xl {
-        max-width: 34em;
-      }
-    }
-    &.layout-row,
-    &.layout-space-first,
-    &.layout-space-last {
-      flex-wrap: nowrap;
-    }
-    &.layout-spaced {
-      justify-content: space-between;
-    }
-    &.layout-centered {
-      justify-content: space-evenly;
-    }
-    &.layout-space-first > :first-child {
-      margin-right: auto;
-    }
-    &.layout-space-last > :last-child {
-      margin-left: auto;
-    }
-    &.layout-rows-right {
-      justify-content: flex-end;
-    }
-    &.layout-row {
-      display: inline-flex;
-    }
-  }
-  &.panel-nav-notheme,
-  &.panel-nav-light,
-  &.panel-nav-dark,
-  &.panel-nav-blue,
-  &.panel-nav-darkblue,
-  &.panel-nav-lightblue {
-    .grouped .groupLabel {
-      font-size: 0.85em;
-      /* border-bottom: 1px solid #fff; */
-      color: #222;
-      font-weight: 600;
-      margin-bottom: 0.75em;
-    }
-    .search {
-      .input {
-        background: #444;
-        border: 1px solid #222;
-        color: #fff;
-        input {
-          color: #fff;
-          &::placeholder {
-            color: #ccc;
-            opacity: 1; /* Firefox */
-          }
-        }
-        .icn {
-          color: #fff;
-        }
-        label {
-          background: #000;
-          color: #fff;
-        }
-      }
-      button {
-        color: #000;
-      }
-    }
+
+  .js-panel-nav__layout--cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-.panel-nav + .panel-nav {
-  margin-top: 1em;
+
+@media (max-width: 520px) {
+  .js-panel-nav__layout--cols-2,
+  .js-panel-nav__layout--cols-3,
+  .js-panel-nav__layout--cols-4,
+  .js-panel-nav__layout--cols-5 {
+    grid-template-columns: 1fr;
+  }
+
+  .js-panel-nav__group--labels-left {
+    flex-direction: column;
+    gap: var(--js-space-2);
+  }
 }
 </style>
