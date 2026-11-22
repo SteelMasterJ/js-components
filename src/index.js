@@ -18,8 +18,11 @@ import JsPanel from "./components/Panel.vue";
 import JsPanelNav from "./components/PanelNav.vue";
 import JsTitleBar from "./components/TitleBar.vue";
 import JsTable from "./components/Table.vue";
+import JsInput from "./components/Input.vue";
+import JsInputCheckbox from "./components/InputCheckbox.vue";
+import JsInputRadio from "./components/InputRadio.vue";
+import JsForm from "./components/Form.vue";
 
-// Components are added here as each Step 2 batch is completed.
 const components = {
   JsIcon,
   JsMarkdown,
@@ -39,6 +42,10 @@ const components = {
   JsPanelNav,
   JsTitleBar,
   JsTable,
+  JsInput,
+  JsInputCheckbox,
+  JsInputRadio,
+  JsForm,
 };
 
 export {
@@ -60,6 +67,10 @@ export {
   JsPanelNav,
   JsTitleBar,
   JsTable,
+  JsInput,
+  JsInputCheckbox,
+  JsInputRadio,
+  JsForm,
 };
 
 export default {

@@ -1,140 +1,251 @@
 <template>
-  <form :class="['js-form']">
-    <div ref="body" class="body">
-      <ul v-if="errors.length">
-        <li v-for="(e, i) in errors" :key="i">{{ e.label }}: {{ e.error }}</li>
-      </ul>
-      <div v-if="model.steps[currentStep].label">
-        <div class="step-header">
-          <h3 class="step-title">{{ model.steps[currentStep].label }}</h3>
-          <ol class="step-dots">
-            <li
-              v-for="s in model.steps.length"
-              :class="{ sel: s === currentStep + 1 }"
-              :title="s"
-            ></li>
-          </ol>
-        </div>
-        <div class="step-details">
-          <i
-            v-if="model.steps[currentStep].subLabel"
-            :class="['fa-solid', 'icn', 'fa-' + model.steps[currentStep].icon]"
-          ></i>
-          <p v-if="model.steps[currentStep].subLabel">
-            {{ model.steps[currentStep].subLabel }}
-          </p>
-        </div>
-      </div>
-      <div
-        class="carousel"
-        :style="{ left: -currentStep * carouselWidth + 'px' }"
-      >
-        <div
-          class="field-group"
-          v-for="(step, j) in steps"
-          :key="j"
-          :class="{ active: currentStep == j }"
-        >
-          <div
-            class="field"
-            v-for="(item, i) in step"
-            :key="i"
-            :style="span(model.items[item].span)"
+  <form
+    :class="['js-form', 'js-form--' + theme]"
+    :novalidate="novalidate"
+    @submit.prevent="handleSubmit"
+  >
+    <div
+      v-if="errors.length"
+      ref="errorSummaryRef"
+      class="js-form__errors"
+      role="alert"
+      aria-live="assertive"
+      tabindex="-1"
+    >
+      <p class="js-form__errors-title">
+        <JsIcon name="alert" />
+        <span>Please fix the following {{ errors.length === 1 ? "issue" : "issues" }}:</span>
+      </p>
+      <ul class="js-form__errors-list">
+        <li v-for="(err, idx) in errors" :key="err.fieldId || idx">
+          <a
+            :href="'#' + err.fieldId"
+            class="js-form__error-link"
+            @click.prevent="focusField(err.fieldId)"
           >
-            <JsMarkdown
-              v-if="model.items[item].header"
-              :val="model.items[item].label"
-              :parse="model.items[item].parseMarkdown.match(/\*/)"
-            />
+            {{ err.label || err.name }}: {{ err.error }}
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <header v-if="activeStepMeta && (activeStepMeta.label || totalSteps > 1)" class="js-form__header">
+      <div class="js-form__step-bar">
+        <h3 v-if="activeStepMeta.label" class="js-form__step-title">
+          {{ activeStepMeta.label }}
+        </h3>
+        <ol
+          v-if="totalSteps > 1"
+          class="js-form__steps"
+          aria-label="Form steps"
+        >
+          <li
+            v-for="(stepMeta, sIdx) in normalizedSteps"
+            :key="sIdx"
+            :class="[
+              'js-form__step-dot',
+              { 'js-form__step-dot--active': sIdx === currentStep },
+              { 'js-form__step-dot--done': sIdx < currentStep },
+            ]"
+            :aria-current="sIdx === currentStep ? 'step' : undefined"
+            :title="stepMeta.label || `Step ${sIdx + 1}`"
+          >
+            <span class="js-sr-only">
+              Step {{ sIdx + 1 }}{{ stepMeta.label ? `: ${stepMeta.label}` : "" }}
+              {{ sIdx === currentStep ? " (current)" : sIdx < currentStep ? " (completed)" : "" }}
+            </span>
+          </li>
+        </ol>
+      </div>
+
+      <div v-if="activeStepMeta.subLabel" class="js-form__step-details">
+        <JsIcon
+          v-if="activeStepMeta.icon"
+          :name="activeStepMeta.icon"
+          class="js-form__step-icon"
+        />
+        <p class="js-form__step-sub">{{ activeStepMeta.subLabel }}</p>
+      </div>
+    </header>
+
+    <fieldset
+      v-if="activeStepItemIndices.length"
+      class="js-form__fieldset"
+    >
+      <legend class="js-sr-only">
+        {{ (activeStepMeta && activeStepMeta.label) || "Form fields" }}
+      </legend>
+
+      <div class="js-form__grid">
+        <template v-for="idx in activeStepItemIndices" :key="items[idx].name || idx">
+          <div
+            v-if="!items[idx].hide"
+            class="js-form__field"
+            :style="fieldSpanStyle(items[idx].span)"
+          >
+            <div v-if="items[idx].header" class="js-form__section-header">
+              <JsMarkdown
+                :val="items[idx].label"
+                :parse="Boolean(items[idx].parseMarkdown || parseMarkdown)"
+              />
+            </div>
+
             <component
-              v-else-if="model.items[item].type === 'custom'"
-              :is="model.items[item].component"
-              :uid="i"
-              v-model="model.items[item].value"
-              v-bind="model.items[item].props || {}"
-              @onChange="inputChange"
+              :is="items[idx].component"
+              v-else-if="items[idx].type === 'custom' && items[idx].component"
+              :id="fieldDomId(idx)"
+              :uid="idx"
+              :model-value="items[idx].value"
+              v-bind="items[idx].props || {}"
+              @update:model-value="(val) => onFieldUpdate(idx, val)"
+              @change="() => onFieldChange(idx)"
             />
+
             <JsInputCheckbox
-              :uid="i"
-              v-else-if="model.items[item].type === 'checkbox'"
-              v-model="model.items[item].value"
-              v-bind="model.items[item]"
+              v-else-if="items[idx].type === 'checkbox'"
+              :id="fieldDomId(idx)"
+              :uid="idx"
+              :size="items[idx].size || size"
+              :theme="items[idx].theme || theme"
+              :model-value="items[idx].value"
+              :label="items[idx].label"
+              :items="items[idx].items || []"
+              :layout="items[idx].layout || 'cols-auto'"
+              :hint="items[idx].hint || items[idx].tip || ''"
+              :invalid="Boolean(items[idx].invalid)"
+              :error="items[idx].error || ''"
+              :disabled="Boolean(items[idx].disabled)"
+              :parse-markdown="items[idx].parseMarkdown || parseMarkdown"
+              @update:model-value="(val) => onFieldUpdate(idx, val)"
+              @change="() => onFieldChange(idx)"
             />
+
             <JsInputRadio
-              :uid="i"
-              v-else-if="model.items[item].type === 'radio'"
-              v-model="model.items[item].value"
-              v-bind="model.items[item]"
+              v-else-if="items[idx].type === 'radio'"
+              :id="fieldDomId(idx)"
+              :uid="idx"
+              :size="items[idx].size || size"
+              :theme="items[idx].theme || theme"
+              :model-value="items[idx].value"
+              :label="items[idx].label"
+              :items="items[idx].items || []"
+              :dots="Boolean(items[idx].dots)"
+              :hint="items[idx].hint || items[idx].tip || ''"
+              :invalid="Boolean(items[idx].invalid)"
+              :error="items[idx].error || ''"
+              :disabled="Boolean(items[idx].disabled)"
+              :parse-markdown="items[idx].parseMarkdown || parseMarkdown"
+              @update:model-value="(val) => onFieldUpdate(idx, val)"
+              @change="() => onFieldChange(idx)"
             />
+
             <JsInput
-              v-else-if="!model.items[item].hide"
-              :uid="i"
-              :size="size"
-              v-model="model.items[item].value"
-              v-bind="model.items[item]"
-              @onChange="inputChange"
+              v-else
+              :id="fieldDomId(idx)"
+              :uid="idx"
+              :size="items[idx].size || size"
+              :theme="items[idx].theme || theme"
+              :type="items[idx].type || 'text'"
+              :model-value="items[idx].value"
+              :label="items[idx].label"
+              :label-top="items[idx].labelTop !== undefined ? items[idx].labelTop : true"
+              :label-placeholder="Boolean(items[idx].labelPlaceholder)"
+              :placeholder="items[idx].placeholder || ''"
+              :items="items[idx].items || []"
+              :icon="items[idx].icon || ''"
+              :step="items[idx].step || '1'"
+              :rows="items[idx].rows || 3"
+              :hint="items[idx].hint || items[idx].tip || ''"
+              :invalid="Boolean(items[idx].invalid)"
+              :error="items[idx].error || ''"
+              :disabled="Boolean(items[idx].disabled)"
+              :parse-markdown="items[idx].parseMarkdown || parseMarkdown"
+              @update:model-value="(val) => onFieldUpdate(idx, val)"
+              @change="() => onFieldChange(idx)"
             />
           </div>
-        </div>
+        </template>
+      </div>
+    </fieldset>
+
+    <div :class="['js-form__actions', { 'js-form__actions--sticky': buttonsSticky }]">
+      <JsPanelNav
+        v-if="modelValue && modelValue.buttons"
+        class="js-form__custom-actions"
+        aria-label="Custom form actions"
+        layout="row"
+        v-bind="modelValue.buttons"
+      />
+
+      <div class="js-form__nav-actions">
+        <JsNavItem
+          v-if="resetButton"
+          theme="light"
+          size="sm"
+          :item="{ label: resetButtonLabel, button: 'button', onClick: reset }"
+        />
+        <span class="js-form__spacer" aria-hidden="true"></span>
+        <JsNavItem
+          v-if="currentStep > 0"
+          theme="light"
+          size="sm"
+          :item="{ label: backButtonLabel, button: 'button', onClick: back }"
+        />
+        <JsNavItem
+          v-if="currentStep < totalSteps - 1"
+          theme="blue"
+          size="sm"
+          :item="{ label: nextButtonLabel, button: 'button', onClick: next }"
+        />
+        <JsNavItem
+          v-else
+          theme="blue"
+          size="sm"
+          :disabled="submitting"
+          :item="{ label: submitButtonLabel, button: 'submit' }"
+        />
       </div>
     </div>
-    <div :class="['buttons', { 'buttons-sticky': buttonsSticky }]">
-      <JsPanelNav class="custom" layout="row" v-bind="model.buttons" />
-      <span class="buttons-spacer"></span>
-      <JsPanelNav
-        class="auto"
-        :layout="resetButton ? 'space-first' : 'rows-right'"
-        :items="buttons"
-      />
-    </div>
-    <!-- {{ model }} -->
-    <br />
-    <label
-      >Skip Validation <input v-model="noValidation" type="checkbox"
-    /></label>
   </form>
 </template>
 
 <script>
+import JsIcon from "./Icon.vue";
 import JsMarkdown from "./Markdown.vue";
+import JsNavItem from "./NavItem.vue";
 import JsPanelNav from "./PanelNav.vue";
-import JsPanelNavItem from "./NavItem.vue/index.js";
 import JsInput from "./Input.vue";
 import JsInputRadio from "./InputRadio.vue";
 import JsInputCheckbox from "./InputCheckbox.vue";
+import { createUid } from "../utils/uid.js";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default {
   name: "JsForm",
   components: {
+    JsIcon,
     JsMarkdown,
+    JsNavItem,
     JsPanelNav,
-    JsPanelNavItem,
     JsInput,
     JsInputRadio,
     JsInputCheckbox,
   },
-  mounted() {
-    //   this.value = ;
-  },
-  data() {
-    return {
-      errors: [],
-      currentStep: 0,
-      noValidation: true,
-      carouselWidth: 0,
-    };
-  },
   props: {
-    value: {
+    modelValue: {
       type: Object,
-      default: () => ({}),
+      default: () => ({ steps: [], items: [] }),
     },
-    buttonsSticky: Boolean,
+    buttonsSticky: {
+      type: Boolean,
+      default: false,
+    },
     size: {
       type: String,
       default: "md",
       validator(value) {
-        return ["xs", "sm", "md", "lg", "xl", "xxl"].includes(value);
+        return ["xs", "sm", "md", "lg", "xl"].includes(value);
       },
     },
     submitButtonLabel: {
@@ -145,9 +256,25 @@ export default {
       type: String,
       default: "Next",
     },
+    backButtonLabel: {
+      type: String,
+      default: "Back",
+    },
+    resetButtonLabel: {
+      type: String,
+      default: "Reset",
+    },
     resetButton: {
       type: Boolean,
       default: true,
+    },
+    resetOnSubmit: {
+      type: Boolean,
+      default: false,
+    },
+    novalidate: {
+      type: Boolean,
+      default: false,
     },
     theme: {
       type: String,
@@ -157,354 +284,452 @@ export default {
       },
     },
     parseMarkdown: {
-      type: String,
+      type: [Boolean, String],
       default: "",
     },
   },
+  emits: ["update:modelValue", "submit", "reset", "step-change", "change"],
+  data() {
+    return {
+      formUid: createUid("js-form"),
+      errors: [],
+      currentStep: 0,
+      submitting: false,
+      defaultValues: [],
+    };
+  },
   computed: {
-    model: {
-      get() {
-        return this.value;
-      },
-      set(val) {
-        this.$emit("input", val);
-      },
+    items() {
+      return Array.isArray(this.modelValue?.items) ? this.modelValue.items : [];
+    },
+    normalizedSteps() {
+      if (
+        Array.isArray(this.modelValue?.steps) &&
+        this.modelValue.steps.length > 0
+      ) {
+        return this.modelValue.steps;
+      }
+      return [{ label: "" }];
     },
     totalSteps() {
-      return this.model.steps.length;
+      return this.normalizedSteps.length;
     },
-    submitBtn() {
-      return {
-        label: this.submitButtonLabel,
-        button: "button",
-        theme: "blue",
-        onClick: this.submit,
-      };
-    },
-    nextBtn() {
-      return {
-        label: this.nextButtonLabel,
-        theme: "blue",
-        button: "button",
-        onClick: this.next,
-      };
-    },
-    buttons() {
-      const buttons = [];
-      if (this.resetButton)
-        buttons.push({ label: "Reset", button: "button", onClick: this.reset });
-      if (this.currentStep > 0)
-        buttons.push({ label: "Back", button: "button", onClick: this.back });
-
-      buttons.push(
-        this.currentStep == this.totalSteps - 1 ? this.submitBtn : this.nextBtn
-      );
-      return buttons;
-    },
-    steps() {
-      const steps = [];
-      let prevStep = null;
-      for (const step of this.model.steps) {
-        const stepItems = [];
-        for (const [index, item] of this.model.items.entries()) {
-          const start = prevStep ? prevStep.end : 0;
-          const end = step.end ? step.end - 1 : this.model.items.length - 1;
-          if (index >= start && index <= end) {
-            stepItems.push(index);
-          }
+    stepBuckets() {
+      const buckets = [];
+      let prevEnd = 0;
+      for (const step of this.normalizedSteps) {
+        const start = prevEnd;
+        const end = step.end ? step.end - 1 : this.items.length - 1;
+        const indices = [];
+        for (let i = start; i <= end && i < this.items.length; i += 1) {
+          indices.push(i);
         }
-        steps.push(stepItems);
-        prevStep = step;
+        buckets.push(indices);
+        prevEnd = step.end || this.items.length;
       }
-      return steps;
+      return buckets;
     },
-    page() {
-      const currentStep = this.model.steps[this.currentStep];
-      const prevStep = this.model.steps[this.step - 1];
-      const start = prevStep ? prevStep.end : 0;
-      const end = currentStep.end
-        ? currentStep.end - 1
-        : this.model.items.length - 1;
-      return { start, end };
+    activeStepMeta() {
+      return this.normalizedSteps[this.currentStep] || null;
+    },
+    activeStepItemIndices() {
+      return this.stepBuckets[this.currentStep] || [];
     },
   },
   mounted() {
-    for (const item of this.model.items) {
-      if (!item.header) {
-        this.$set(item, "defaultValue", item.value);
-      }
-    }
-  },
-  created() {
-    window.addEventListener("resize", this.setCarouselWidth);
-  },
-  destroyed() {
-    window.removeEventListener("resize", this.setCarouselWidth);
+    this.snapshotDefaults();
   },
   methods: {
-    submit(e) {
-      this.$set(this.submitBtn, "disabled", true);
-      if (!this.noValidation) this.validate();
-      if (this.errors.length && !this.noValidation) {
-        this.$set(this.submitBtn, "disabled", false);
+    snapshotDefaults() {
+      this.defaultValues = this.items.map((item) => {
+        if (item.header) return undefined;
+        return Array.isArray(item.value) ? [...item.value] : item.value;
+      });
+    },
+    fieldDomId(idx) {
+      const item = this.items[idx];
+      if (item && item.id) return item.id;
+      return `${this.formUid}-f-${idx}`;
+    },
+    fieldSpanStyle(span) {
+      return {
+        gridColumn: span || "1 / -1",
+      };
+    },
+    focusField(domId) {
+      if (typeof document === "undefined") return;
+      const el = document.getElementById(domId);
+      if (!el) return;
+      if (typeof el.focus === "function" && ["INPUT", "SELECT", "TEXTAREA"].includes(el.tagName)) {
+        el.focus();
       } else {
-        const clean = this.value.items.map((a) => ({
-          name: a.name,
-          value: a.value,
-        }));
-        console.log(clean[4]);
-        this.$emit("on-submit", clean);
-
-        this.reset();
+        const input = el.querySelector("input, select, textarea, button");
+        if (input && typeof input.focus === "function") {
+          input.focus();
+        }
       }
     },
-    setCarouselWidth(e) {
-      this.carouselWidth = this.$refs.body.offsetWidth;
+    onFieldUpdate(idx, val) {
+      const item = this.items[idx];
+      if (!item) return;
+      item.value = val;
+      item.invalid = false;
+      item.error = "";
+      this.applyActions(item);
+      this.$emit("update:modelValue", this.modelValue);
+      this.$emit("change", { index: idx, name: item.name, value: val, item });
     },
-    next(e, item) {
-      if (!this.noValidation) this.validate();
-      if (!this.errors.length || this.noValidation) {
-        this.setCarouselWidth();
-        this.currentStep++;
+    onFieldChange(idx) {
+      const item = this.items[idx];
+      if (!item) return;
+      item.invalid = false;
+      item.error = "";
+      this.applyActions(item);
+    },
+    applyActions(item) {
+      if (!Array.isArray(item.actions)) return;
+      for (const act of item.actions) {
+        const target = this.items.find((it) => it.name === act.name);
+        if (!target) continue;
+        if (act.action === "show") {
+          target.hide = act.value !== item.value;
+        } else if (act.action === "hide") {
+          target.hide = act.value === item.value;
+        }
+      }
+    },
+    validateStep(stepIndex = this.currentStep) {
+      this.errors = [];
+      const indices = this.stepBuckets[stepIndex] || [];
+
+      for (const idx of indices) {
+        const item = this.items[idx];
+        if (!item || item.header || item.hide || item.disabled) continue;
+
+        item.invalid = false;
+        item.error = "";
+
+        const raw = item.value;
+        const val = typeof raw === "string" ? raw.trim() : raw;
+        const isEmpty =
+          val === undefined ||
+          val === null ||
+          val === "" ||
+          (Array.isArray(val) && val.length === 0) ||
+          (item.type === "checkbox" && !Array.isArray(val) && val === false && !item.optional);
+
+        if (isEmpty) {
+          if (!item.optional) {
+            this.recordError(idx, item, "Required");
+          }
+          continue;
+        }
+
+        if (item.type === "email" && typeof val === "string" && !EMAIL_RE.test(val)) {
+          this.recordError(idx, item, "Enter a valid email address");
+          continue;
+        }
+
+        if (Array.isArray(item.validation)) {
+          for (const rule of item.validation) {
+            const key = Object.keys(rule)[0];
+            const ruleVal = rule[key];
+            if (key === "min" && typeof val === "string" && val.length < ruleVal) {
+              this.recordError(idx, item, `At least ${ruleVal} characters required`);
+              break;
+            }
+            if (key === "max" && typeof val === "string" && val.length > ruleVal) {
+              this.recordError(idx, item, `At most ${ruleVal} characters allowed`);
+              break;
+            }
+            if (
+              (key === "pat" || key === "pattern") &&
+              typeof val === "string" &&
+              !new RegExp(ruleVal).test(val)
+            ) {
+              this.recordError(idx, item, rule.message || "Invalid format");
+              break;
+            }
+          }
+        }
+
+        if (!item.invalid && typeof item.validator === "function") {
+          const msg = item.validator(val, item);
+          if (typeof msg === "string" && msg.length > 0) {
+            this.recordError(idx, item, msg);
+          }
+        }
+      }
+
+      if (this.errors.length) {
+        this.$nextTick(() => {
+          if (this.$refs.errorSummaryRef) {
+            this.$refs.errorSummaryRef.focus();
+          }
+        });
+      }
+
+      return this.errors.length === 0;
+    },
+    recordError(idx, item, message) {
+      item.invalid = true;
+      item.error = message;
+      this.errors.push({
+        fieldId: this.fieldDomId(idx),
+        name: item.name || `Field ${idx + 1}`,
+        label: item.label || item.name || `Field ${idx + 1}`,
+        error: message,
+      });
+    },
+    next() {
+      if (!this.novalidate && !this.validateStep(this.currentStep)) return;
+      if (this.currentStep < this.totalSteps - 1) {
+        this.currentStep += 1;
+        this.errors = [];
+        this.$emit("step-change", this.currentStep);
       }
     },
     back() {
-      // this.$set(this.nextBtn, "disabled", false);
-      // this.$set(this.submitBtn, "disabled", false);
-      this.currentStep--;
+      if (this.currentStep > 0) {
+        this.currentStep -= 1;
+        this.errors = [];
+        this.$emit("step-change", this.currentStep);
+      }
     },
     reset() {
       this.errors = [];
-      for (const item of this.model.items) {
-        if (!item.header) {
-          this.$set(item, "invalid", false);
-          this.$set(item, "value", item.defaultValue);
-          this.$set(item, "actionIcon", false);
-          this.$set(item, "error", "");
-        }
-      }
+      this.items.forEach((item, idx) => {
+        if (item.header) return;
+        item.invalid = false;
+        item.error = "";
+        const def = this.defaultValues[idx];
+        item.value = Array.isArray(def) ? [...def] : def ?? "";
+      });
       this.currentStep = 0;
-      this.$set(this.submitBtn, "disabled", false);
+      this.submitting = false;
+      this.$emit("update:modelValue", this.modelValue);
+      this.$emit("reset");
     },
-    validate() {
-      this.errors = [];
-      const stepItems = this.steps[this.currentStep];
-      for (const i of stepItems) {
-        const item = this.model.items[i];
-        const value =
-          typeof item.value === "string" ? item.value.trim() : item.value;
-        this.$set(item, "invalid", false);
-        this.$set(item, "error", null);
-        this.$set(item, "tip", null);
-        if (!item.header && !item.hide) {
-          //check validation rules, including optional
-          //sample: [{ opt: true }, { min: 5 }, { max: 8 }, { pat: "W." }]
-          console.log("validate val", JSON.parse(JSON.stringify(value)));
-          console.log("xxx", Array.isArray(value), value.length);
-          // arrays and objects
-          if (Array.isArray(value)) {
-            const firstValue = value[0];
-            console.log("firstValue", firstValue);
-
-            if (
-              typeof firstValue === "object" &&
-              !Array.isArray(firstValue) &&
-              firstValue !== null
-            ) {
-              // object array
-              console.log("object array");
-
-              for (const val of item.defaultValue) {
-                for (const [key, v] of Object.entries(val)) {
-                  if (!v.toString().length) {
-                    this.$set(item.props, "invalid", true);
-                    this.$set(item.props, "error", "Required");
-                    this.$set(item.props, "tip", "Required");
-                    this.errors.push(item);
-                  }
-                }
-                console.log(item);
-              }
-            } else {
-              // simple array
-              console.log("simple array", item);
-              if (!value.length) {
-                this.$set(item, "invalid", true);
-                this.$set(item, "error", "Required");
-                this.$set(item, "tip", "Required");
-                this.errors.push(item);
-              }
-            }
-            // strings and numbers
-          } else if (!value.toString().length) {
-            if (!item.optional) {
-              //enforce implicit required validation
-              this.$set(item, "invalid", true);
-              this.$set(item, "error", "Required");
-              this.$set(item, "tip", "Required");
-              this.errors.push(item);
-            }
-          } else if (item.validation) {
-            for (const v of item.validation) {
-              const ruleKey = Object.keys(v)[0];
-              const ruleVal = v[ruleKey];
-              if (value === "") {
-                this.$set(item, "invalid", true);
-                this.$set(item, "error", "Required");
-                this.$set(item, "tip", "Required");
-                this.errors.push(item);
-                break;
-              }
-              if (ruleKey === "min" && value.length < ruleVal) {
-                this.$set(item, "invalid", true);
-                this.$set(
-                  item,
-                  "error",
-                  `At least ${ruleVal} characters required`
-                );
-                this.$set(
-                  item,
-                  "tip",
-                  `At least ${ruleVal} characters required`
-                );
-
-                this.errors.push(item);
-                break;
-              }
-              if (ruleKey === "max" && value.length > ruleVal) {
-                this.$set(item, "invalid", true);
-                this.$set(item, "error", `Only ${ruleVal} characters allowed`);
-                this.$set(item, "tip", `Only ${ruleVal} characters allowed`);
-                this.errors.push(item);
-                break;
-              }
-            }
-          }
-        }
+    handleSubmit() {
+      if (!this.novalidate && !this.validateStep(this.currentStep)) {
+        return;
       }
-    },
-    inputChange(i) {
-      const item = this.model.items[i];
-      //clear item validation
-      item.error = null;
-      item.invalid = false;
-      item.tip = "";
-      //process any changes
-      if (item.actions) {
-        for (const c of item.actions) {
-          const target = this.getItemByName(c.name);
-          if (c.action === "show") {
-            this.$set(target, "hide", c.value !== item.value);
-          }
-          if (c.action === "hide") {
-            this.$set(target, "hide", c.value === item.value);
-          }
-        }
+      this.submitting = true;
+      const payload = this.items
+        .filter((item) => !item.header)
+        .map((item) => ({
+          name: item.name,
+          value: item.value,
+        }));
+      this.$emit("submit", payload);
+      if (this.resetOnSubmit) {
+        this.reset();
+      } else {
+        this.submitting = false;
       }
-    },
-    getItemByName(name) {
-      return this.model.items.find((item) => item.name === name);
-    },
-    span(cols) {
-      return {
-        gridColumn: cols ? cols : "1/13",
-      };
     },
   },
 };
 </script>
-<style lang="scss" scoped>
+
+<style scoped>
 .js-form {
-  position: relative;
-  height: 65vh;
-  overflow-y: auto;
-  .body {
-    overflow: hidden;
-    .step-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      .step-title {
-        margin-bottom: 1em;
-      }
-      .step-dots {
-        padding: 0;
-        margin: 0;
-        display: flex;
-        gap: 0.35em;
-        list-style: none;
-        li {
-          margin: 0;
-          width: 0.65em;
-          height: 0.65em;
-          background: #d7d7d7;
-          border-radius: 50%;
-          filter: alpha(opacity = 25);
-          transition: all 0.3s;
-          &.sel {
-            background: #2883a8;
-          }
-        }
-      }
-    }
-    .step-details {
-      display: flex;
-      align-items: center;
-      gap: 1.5em;
-      margin-bottom: 1.5em;
-      padding: 1em 1.75em;
-      background: #e5f9ff;
-      border-radius: 0.5em;
-      .icn {
-        font-size: 3.5em;
-        color: rgba(0, 0, 0, 0.2);
-        color: #2883a8;
-      }
-      p {
-        flex: 1;
-        margin: 0;
-        font-size: 0.9em;
-        font-weight: 500;
-      }
-    }
-    .carousel {
-      display: flex;
-      align-items: start;
-      position: relative;
-      transition: all 0.3s;
-      .field-group {
-        transition: all 0.13s;
-        display: grid;
-        align-content: center;
-        visibility: hidden;
-        grid-template-columns: repeat(12, 1fr);
-        gap: 1em;
-        min-width: 100%;
-        .field {
-          // border: 1px solid #ccc;
-        }
-        &.active {
-          visibility: visible;
-        }
-      }
-    }
+  display: flex;
+  flex-direction: column;
+  gap: var(--js-space-4);
+  width: 100%;
+  font-family: var(--js-font-family);
+  color: var(--js-color-text);
+}
+
+.js-form__errors {
+  padding: var(--js-space-3) var(--js-space-4);
+  border: 1px solid var(--js-color-danger);
+  border-radius: var(--js-radius-md);
+  background-color: #fdf2f2;
+  color: var(--js-color-danger);
+}
+
+.js-form__errors:focus-visible {
+  outline: var(--js-focus-ring);
+  outline-offset: var(--js-focus-offset);
+}
+
+.js-form__errors-title {
+  display: flex;
+  align-items: center;
+  gap: var(--js-space-2);
+  margin: 0 0 var(--js-space-2);
+  font-size: var(--js-font-size-sm);
+  font-weight: 700;
+}
+
+.js-form__errors-list {
+  margin: 0;
+  padding-inline-start: 1.25rem;
+  font-size: var(--js-font-size-sm);
+}
+
+.js-form__error-link {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.js-form__error-link:focus-visible {
+  outline: var(--js-focus-ring);
+  outline-offset: 2px;
+}
+
+.js-form__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--js-space-2);
+}
+
+.js-form__step-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--js-space-2);
+}
+
+.js-form__step-title {
+  margin: 0;
+  font-size: var(--js-font-size-lg);
+  font-weight: 700;
+}
+
+.js-form__steps {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.js-form__step-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background-color: var(--js-color-border-strong);
+  transition: background-color var(--js-transition-fast),
+    transform var(--js-transition-fast);
+}
+
+.js-form__step-dot--active {
+  background-color: var(--js-color-primary);
+  transform: scale(1.2);
+}
+
+.js-form__step-dot--done {
+  background-color: var(--js-color-success);
+}
+
+.js-form__step-details {
+  display: flex;
+  align-items: center;
+  gap: var(--js-space-3);
+  padding: var(--js-space-3) var(--js-space-4);
+  border-radius: var(--js-radius-md);
+  background-color: var(--js-color-primary-soft);
+  color: var(--js-color-primary-hover);
+}
+
+.js-form__step-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.js-form__step-sub {
+  margin: 0;
+  font-size: var(--js-font-size-sm);
+  font-weight: 500;
+}
+
+.js-form__fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.js-form__grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--js-space-4);
+  align-items: start;
+}
+
+.js-form__field {
+  min-width: 0;
+}
+
+.js-form__section-header {
+  font-size: var(--js-font-size-md);
+  font-weight: 700;
+  padding-bottom: var(--js-space-1);
+  border-bottom: 1px solid var(--js-color-divider);
+}
+
+.js-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--js-space-2);
+  padding-top: var(--js-space-2);
+}
+
+.js-form__actions--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--js-z-sticky);
+  padding: var(--js-space-2) var(--js-space-3);
+  border-radius: var(--js-radius-md);
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--js-color-border);
+}
+
+.js-form__nav-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--js-space-2);
+  flex: 1 1 auto;
+}
+
+.js-form__spacer {
+  flex: 1 1 auto;
+}
+
+/* Dark theme */
+.js-form--dark {
+  color: var(--js-color-text-inverse);
+}
+
+.js-form--dark .js-form__step-details {
+  background-color: var(--js-color-surface-dark-hover);
+  color: var(--js-color-text-inverse);
+}
+
+.js-form--dark .js-form__section-header {
+  border-bottom-color: var(--js-color-divider-dark);
+}
+
+.js-form--dark .js-form__actions--sticky {
+  background-color: rgba(37, 40, 44, 0.92);
+  border-color: var(--js-color-divider-dark);
+}
+
+@media (max-width: 640px) {
+  .js-form__grid {
+    grid-template-columns: 1fr;
   }
-  .buttons {
-    position: sticky;
-    bottom: 0;
-    margin-top: 1em;
-    display: flex;
-    align-items: center;
-    gap: 0.35em;
-    .auto {
-      flex: 1;
-    }
-    &.buttons-sticky {
-      background: rgba(255, 255, 255, 0.7);
-      padding: 0.25em;
-      border-radius: 100px;
-      backdrop-filter: blur(4px);
-    }
+
+  .js-form__field {
+    grid-column: 1 / -1;
   }
 }
 </style>

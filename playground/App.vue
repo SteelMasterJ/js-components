@@ -3,10 +3,8 @@
     <header class="pg-header">
       <h1>js-components Playground</h1>
       <p>
-        Batches 2A &amp; 2B Showcase — Vue 3 Options API, semantic HTML, WCAG
-        2.1 AA, vanilla CSS, and slotted SVG icons.
-        Batches 2A, 2B &amp; 2C Showcase — Vue 3 Options API, semantic HTML,
-        WCAG 2.1 AA, vanilla CSS, and slotted SVG icons.
+        Complete Component Library Showcase (Batches 2A–2D) — Vue 3 Options
+        API, semantic HTML, WCAG 2.1 AA, vanilla CSS, and slotted SVG icons.
       </p>
     </header>
 
@@ -842,11 +840,209 @@
       </div>
     </section>
 
-    <!-- 10. JsModal -->
+    <!-- 10. JsInput (Batch 2D) -->
+    <section class="pg-section" aria-labelledby="input-heading">
+      <h2 id="input-heading">
+        10. JsInput (Text, Select, Textarea, Autocomplete Combobox, Floating Label, $attrs, Validation &amp; Dark Theme)
+      </h2>
+      <div class="pg-stack">
+        <div class="pg-card">
+          <h3>Text, Autocomplete Combobox (Arrow/Enter/Esc + Viewport Flip), Select &amp; Textarea</h3>
+          <div class="pg-grid-2">
+            <JsInput
+              v-model="demoText"
+              label="Full Name"
+              placeholder="Jane Doe"
+              icon="search"
+              hint="Native $attrs like maxlength=40 are forwarded directly."
+              maxlength="40"
+              autocomplete="name"
+            />
+            <JsInput
+              v-model="demoCombo"
+              label="Framework (Autocomplete)"
+              placeholder="Type or focus to search..."
+              :items="comboItems"
+              drop-theme="light"
+              hint="Use ArrowDown/ArrowUp, Enter, or Escape."
+            />
+            <JsInput
+              v-model="demoSelect"
+              type="select"
+              label="Role"
+              placeholder="Select a role..."
+              :items="[
+                { label: 'Frontend Engineer', value: 'fe' },
+                { label: 'Accessibility Lead', value: 'a11y' },
+                { label: 'Design Systems', value: 'ds' },
+              ]"
+            />
+            <JsInput
+              v-model="demoTextarea"
+              type="textarea"
+              label="Bio"
+              :rows="3"
+              placeholder="Write a short summary..."
+            />
+          </div>
+        </div>
+
+        <div class="pg-card">
+          <h3>States &amp; Variants (Error + role="alert", Floating Label, Custom SVG #icon, Notify, Disabled &amp; Dark)</h3>
+          <div class="pg-grid-2">
+            <JsInput
+              v-model="demoInvalid"
+              type="email"
+              label="Work Email"
+              placeholder="name@company.com"
+              :invalid="true"
+              error="Please enter a valid work email address."
+            />
+            <JsInput
+              v-model="demoFloat"
+              label="Floating Label"
+              :label-placeholder="true"
+              :notify-count="3"
+              notify-color="blue"
+            >
+              <template #icon>
+                <JsIcon color="#1d6f90">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                </JsIcon>
+              </template>
+            </JsInput>
+            <JsInput
+              model-value="Read-only value"
+              label="Disabled Input"
+              :disabled="true"
+              size="sm"
+            />
+            <div class="pg-dark-strip pg-dark-strip--flush">
+              <JsInput
+                v-model="demoDarkInput"
+                label="Dark Theme Input"
+                theme="dark"
+                placeholder="Type in dark mode..."
+                icon="bell"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. JsInputCheckbox (Batch 2D) -->
+    <section class="pg-section" aria-labelledby="checkbox-heading">
+      <h2 id="checkbox-heading">
+        11. JsInputCheckbox (Semantic &lt;fieldset&gt;/&lt;legend&gt; Groups, Single Boolean Mode &amp; Responsive Grids)
+      </h2>
+      <div class="pg-grid-2">
+        <div class="pg-card">
+          <h3>Checkbox Group (layout="cols-2", selected: {{ demoChecks.join(", ") || "none" }})</h3>
+          <JsInputCheckbox
+            v-model="demoChecks"
+            label="Enabled Features"
+            icon="check"
+            layout="cols-2"
+            :items="[
+              { label: 'Keyboard Nav', value: 'kb' },
+              { label: 'WCAG AA Contrast', value: 'contrast' },
+              { label: 'Vanilla CSS', value: 'css' },
+              { label: 'SSR Safe (disabled)', value: 'ssr', disabled: true },
+            ]"
+            hint="Multi-column layouts collapse cleanly to 1 column on mobile."
+          />
+        </div>
+
+        <div class="pg-card">
+          <h3>Single Boolean Checkbox &amp; Error State (checked={{ demoSingleCheck }})</h3>
+          <div class="pg-stack">
+            <JsInputCheckbox
+              v-model="demoSingleCheck"
+              label="I agree to the *terms* and privacy policy"
+              :parse-markdown="true"
+              :error="demoSingleCheck ? '' : 'Acceptance is required to continue.'"
+            />
+            <div class="pg-dark-strip pg-dark-strip--flush">
+              <JsInputCheckbox
+                v-model="demoDarkChecks"
+                label="Dark Theme Options"
+                theme="dark"
+                layout="rows"
+                :items="[
+                  { label: 'Email', value: 'email' },
+                  { label: 'SMS', value: 'sms' },
+                ]"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12. JsInputRadio (Batch 2D) -->
+    <section class="pg-section" aria-labelledby="radio-heading">
+      <h2 id="radio-heading">
+        12. JsInputRadio (Semantic &lt;fieldset&gt;/&lt;legend&gt;, Accessible Color Swatch Dots &amp; Dark Theme)
+      </h2>
+      <div class="pg-grid-2">
+        <div class="pg-card">
+          <h3>Standard Radio Group (selected={{ demoRadio }})</h3>
+          <JsInputRadio
+            v-model="demoRadio"
+            label="Preferred Density"
+            :items="[
+              { label: 'Compact', value: 'compact' },
+              { label: 'Comfortable', value: 'comfortable' },
+              { label: 'Spacious', value: 'spacious' },
+            ]"
+            hint="Use Arrow keys to move between radio options."
+          />
+        </div>
+
+        <div class="pg-card">
+          <h3>Color Swatch Dots Mode (dots=true + .js-sr-only labels, selected={{ demoDotColor }})</h3>
+          <JsInputRadio
+            v-model="demoDotColor"
+            label="Accent Color"
+            :dots="true"
+            :items="[
+              { label: 'Ocean Blue', value: '#1d6f90', color: '#1d6f90' },
+              { label: 'Forest Green', value: '#1e7e34', color: '#1e7e34' },
+              { label: 'Burnt Orange', value: '#a64b00', color: '#a64b00' },
+              { label: 'Royal Purple', value: '#7b3896', color: '#7b3896' },
+              { label: 'Crimson Red', value: '#c5221f', color: '#c5221f' },
+            ]"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- 13. JsForm (Batch 2D) -->
+    <section class="pg-section" aria-labelledby="form-heading">
+      <h2 id="form-heading">
+        13. JsForm (Multi-Step Wizard, Validation Summary Links, Conditional Show/Hide &amp; Responsive Grid)
+      </h2>
+      <div class="pg-card">
+        <JsForm
+          v-model="demoFormModel"
+          submit-button-label="Create Project"
+          :parse-markdown="true"
+          @submit="onFormSubmit"
+        />
+        <div v-if="formSubmittedPayload" class="pg-submit-result" role="status" aria-live="polite">
+          <strong>Submitted payload:</strong>
+          <pre>{{ JSON.stringify(formSubmittedPayload, null, 2) }}</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14. JsModal -->
     <section class="pg-section" aria-labelledby="modal-heading">
       <h2 id="modal-heading">
-        6. JsModal (Sizes, Slots, Dynamic Component, Focus Trap &amp; Escape)
-        10. JsModal (Sizes, Slots, Dynamic Component, Focus Trap &amp; Escape)
+        14. JsModal (Sizes, Slots, Dynamic Component, Focus Trap &amp; Escape)
       </h2>
       <div class="pg-row">
         <button type="button" class="pg-btn" @click="openModal('sm')">
@@ -930,12 +1126,10 @@
       </JsModal>
     </section>
 
-    <!-- 7. JsMarkdown -->
-    <!-- 11. JsMarkdown -->
+    <!-- 15. JsMarkdown -->
     <section class="pg-section" aria-labelledby="md-heading">
       <h2 id="md-heading">
-        7. JsMarkdown (Inline Formatting, Accessible Tags &amp; XSS Safety)
-        11. JsMarkdown (Inline Formatting, Accessible Tags &amp; XSS Safety)
+        15. JsMarkdown (Inline Formatting, Accessible Tags &amp; XSS Safety)
       </h2>
       <div class="pg-stack">
         <div class="pg-card">
@@ -970,12 +1164,10 @@
       </div>
     </section>
 
-    <!-- 8. JsTabs -->
-    <!-- 12. JsTabs -->
+    <!-- 16. JsTabs -->
     <section class="pg-section" aria-labelledby="tabs-heading">
       <h2 id="tabs-heading">
-        8. JsTabs (Themes, Sizes, Alignments, Keyboard Arrows &amp; Disabled)
-        12. JsTabs (Themes, Sizes, Alignments, Keyboard Arrows &amp; Disabled)
+        16. JsTabs (Themes, Sizes, Alignments, Keyboard Arrows &amp; Disabled)
       </h2>
       <div class="pg-stack">
         <div class="pg-card">
@@ -1069,12 +1261,10 @@
       </div>
     </section>
 
-    <!-- 9. JsIcon -->
-    <!-- 13. JsIcon -->
+    <!-- 17. JsIcon -->
     <section class="pg-section" aria-labelledby="icons-heading">
       <h2 id="icons-heading">
-        9. JsIcon (Built-in Chrome &amp; Slotted Custom SVGs)
-        13. JsIcon (Built-in Chrome &amp; Slotted Custom SVGs)
+        17. JsIcon (Built-in Chrome &amp; Slotted Custom SVGs)
       </h2>
       <div class="pg-row">
         <span class="pg-chip"><JsIcon name="search" /> search</span>
@@ -1342,6 +1532,112 @@ export default {
           { label: "--js-* tokens", align: "r" },
         ],
       ],
+      demoText: "",
+      demoCombo: "",
+      comboItems: [
+        { label: "Vue 3", subLabel: "Options & Composition API" },
+        { label: "Vite", subLabel: "Fast library bundler" },
+        { label: "Vitest", subLabel: "Unit test runner" },
+        { label: "Vanilla CSS", subLabel: "Custom properties, zero Sass" },
+      ],
+      demoSelect: "",
+      demoTextarea: "",
+      demoInvalid: "not-an-email",
+      demoFloat: "Floating active",
+      demoDarkInput: "",
+      demoChecks: ["kb", "contrast"],
+      demoSingleCheck: true,
+      demoDarkChecks: ["email"],
+      demoRadio: "comfortable",
+      demoDotColor: "#1d6f90",
+      formSubmittedPayload: null,
+      demoFormModel: {
+        steps: [
+          {
+            label: "Step 1: Project Basics",
+            subLabel: "Try clicking Next with empty required fields to see the accessible error summary links.",
+            icon: "list-ul",
+            end: 4,
+          },
+          {
+            label: "Step 2: Configuration",
+            subLabel: "Choose deployment options and confirm settings.",
+            icon: "check",
+          },
+        ],
+        items: [
+          {
+            name: "projectName",
+            label: "Project Name",
+            placeholder: "e.g. my-app",
+            value: "",
+            span: "1 / 7",
+            validation: [{ min: 3 }],
+          },
+          {
+            name: "ownerEmail",
+            type: "email",
+            label: "Owner Email",
+            placeholder: "you@example.com",
+            value: "",
+            span: "7 / 13",
+          },
+          {
+            name: "visibility",
+            type: "select",
+            label: "Visibility",
+            placeholder: "Choose visibility...",
+            value: "public",
+            span: "1 / 7",
+            items: [
+              { label: "Public", value: "public" },
+              { label: "Private", value: "private" },
+            ],
+            actions: [{ name: "accessCode", action: "show", value: "private" }],
+          },
+          {
+            name: "accessCode",
+            label: "Private Access Code",
+            placeholder: "Shown only when Private is selected",
+            value: "",
+            span: "7 / 13",
+            hide: true,
+          },
+          {
+            name: "features",
+            type: "checkbox",
+            label: "Included Capabilities",
+            layout: "cols-2",
+            value: ["a11y"],
+            items: [
+              { label: "WCAG 2.1 AA", value: "a11y" },
+              { label: "Tree-shaking", value: "tree" },
+              { label: "Dark Theme", value: "dark" },
+              { label: "SSR Ready", value: "ssr" },
+            ],
+          },
+          {
+            name: "accent",
+            type: "radio",
+            label: "Brand Accent",
+            dots: true,
+            value: "#1d6f90",
+            items: [
+              { label: "Ocean Blue", value: "#1d6f90", color: "#1d6f90" },
+              { label: "Forest Green", value: "#1e7e34", color: "#1e7e34" },
+              { label: "Royal Purple", value: "#7b3896", color: "#7b3896" },
+            ],
+          },
+          {
+            name: "notes",
+            type: "textarea",
+            label: "Release Notes (Optional)",
+            optional: true,
+            placeholder: "Optional details...",
+            value: "",
+          },
+        ],
+      },
     };
   },
   methods: {
@@ -1357,6 +1653,9 @@ export default {
     },
     onTableCellClick({ cell }) {
       this.lastNavClick = `Table cell: ${cell?.label || "(cell)"}`;
+    },
+    onFormSubmit(payload) {
+      this.formSubmittedPayload = payload;
     },
   },
 };
@@ -1559,5 +1858,24 @@ body {
 
 .pg-panel-line:last-child {
   margin-bottom: 0;
+}
+
+.pg-dark-strip--flush {
+  margin-top: 0;
+}
+
+.pg-submit-result {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--js-radius-md);
+  background: var(--js-color-primary-soft);
+  color: var(--js-color-primary-hover);
+  font-size: var(--js-font-size-sm);
+}
+
+.pg-submit-result pre {
+  margin: 0.5rem 0 0;
+  overflow-x: auto;
+  font-size: var(--js-font-size-xs);
 }
 </style>

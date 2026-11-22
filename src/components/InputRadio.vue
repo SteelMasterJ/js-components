@@ -1,102 +1,137 @@
 <template>
-  <div
+  <fieldset
+    :id="fieldId"
+    :disabled="disabled"
+    :aria-invalid="isInvalid ? 'true' : undefined"
+    :aria-describedby="describedBy || undefined"
     :class="[
       'js-input-radio',
-      'js-input-radio-' + size,
-      'js-input-radio-' + (disabled ? 'disabled' : theme),
-      { 'js-input-radio-label-top': labelTop },
-      { 'js-input-radio-label-invalid': invalid },
+      'js-input-radio--' + size,
+      'js-input-radio--' + (disabled ? 'disabled' : theme),
+      { 'js-input-radio--invalid': isInvalid },
+      { 'js-input-radio--dots': dots },
     ]"
   >
-    <label
+    <legend
       v-if="label"
-      :for="fieldID"
-      :class="[
-        'label',
-        { 'label-wrap': labelWrap },
-        { 'label-show': inputVal.length },
-      ]"
-      ><JsMarkdown :parse="parseMarkdown.match(/label|\*/)" :val="label" />
-    </label>
-    <div
-      :class="['item', { tip: tip }, 'tip-' + (tipPos || 'tr')]"
-      :data-tip="tip"
+      :class="['js-input-radio__legend', { 'js-input-radio__legend--wrap': labelWrap }]"
     >
-      <div :class="[{ dots: dots }]">
-        <label v-for="(radio, i) in items" :key="i">
-          <input
-            :style="{
-              backgroundColor: radio.color,
-              backgroundImage: `url(${radio.img})`,
-            }"
-            :name="`radio${_uid}`"
-            type="radio"
-            :value="radio.value"
-            v-model="inputVal"
-            :title="radio.label"
-          />{{ dots ? "" : radio.label }}</label
-        >
-      </div>
+      <JsMarkdown :parse="shouldParseLabel" :val="label" />
+    </legend>
+
+    <div :class="['js-input-radio__list', { 'js-input-radio__list--dots': dots }]">
+      <label
+        v-for="(radio, i) in items"
+        :key="radio.value != null ? radio.value : i"
+        :class="[
+          'js-input-radio__option',
+          { 'js-input-radio__option--dot': dots },
+          { 'js-input-radio__option--checked': modelValue === radio.value },
+          { 'js-input-radio__option--disabled': Boolean(disabled || radio.disabled) },
+        ]"
+        :title="dots ? radio.label : undefined"
+      >
+        <input
+          type="radio"
+          :class="['js-input-radio__native', { 'js-input-radio__native--dot': dots }]"
+          :name="resolvedName"
+          :value="radio.value"
+          :checked="modelValue === radio.value"
+          :disabled="Boolean(disabled || radio.disabled)"
+          :style="dotStyle(radio)"
+          @change="onSelect(radio.value, $event)"
+        />
+        <span :class="dots ? 'js-sr-only' : 'js-input-radio__text'">
+          {{ radio.label }}
+        </span>
+      </label>
     </div>
-  </div>
+
+    <p v-if="error" :id="errorId" class="js-input-radio__error" role="alert">
+      <JsIcon :name="errorIcon" />
+      <span>{{ error }}</span>
+    </p>
+    <p v-else-if="hint || tip" :id="hintId" class="js-input-radio__hint">
+      {{ hint || tip }}
+    </p>
+  </fieldset>
 </template>
 
 <script>
+import JsIcon from "./Icon.vue";
 import JsMarkdown from "./Markdown.vue";
+import { createUid } from "../utils/uid.js";
 
 export default {
   name: "JsInputRadio",
   components: {
+    JsIcon,
     JsMarkdown,
   },
-  data() {
-    return {
-      xvalue: "",
-    };
-  },
   props: {
-    uid: Number,
-    value: {
-      type: [String, Number, Object, Array],
+    uid: {
+      type: [Number, String],
+      default: undefined,
+    },
+    modelValue: {
+      type: [String, Number, Boolean],
       default: "",
     },
-    type: {
+    name: {
       type: String,
-      default: "text",
+      default: "",
     },
-    step: {
+    dots: {
+      type: Boolean,
+      default: false,
+    },
+    items: {
+      type: Array,
+      default: () => [],
+    },
+    id: {
       type: String,
-      default: "1",
+      default: "",
     },
-    dots: Boolean,
-    items: { type: Array, default: () => [] },
-    submit: Object,
-    id: String,
-    label: String,
-    labelTop: Boolean,
-    labelPlaceholder: Boolean,
-    placeholder: String,
-    icon: String,
-    iconColor: String,
-    iconVariant: String,
-    actionIcon: [String, Boolean],
-    actionFX: String,
-    img: String,
-    imgSize: String,
-    tip: String,
-    tipPos: String,
-    invalid: Boolean,
-    error: String,
-    errorIcon: { type: String, default: "triangle-exclamation" },
+    label: {
+      type: String,
+      default: "",
+    },
+    hint: {
+      type: String,
+      default: "",
+    },
+    tip: {
+      type: String,
+      default: "",
+    },
+    invalid: {
+      type: Boolean,
+      default: false,
+    },
+    error: {
+      type: String,
+      default: "",
+    },
+    errorIcon: {
+      type: String,
+      default: "alert",
+    },
     size: {
       type: String,
       default: "md",
       validator(value) {
-        return ["xs", "sm", "md", "lg", "xl", "xxl"].includes(value);
+        return ["xs", "sm", "md", "lg", "xl"].includes(value);
       },
     },
-    disabled: Boolean,
-    labelWrap: Boolean,
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
+    labelWrap: {
+      type: Boolean,
+      default: false,
+    },
     theme: {
       type: String,
       default: "light",
@@ -105,316 +140,201 @@ export default {
       },
     },
     parseMarkdown: {
-      type: String,
+      type: [Boolean, String],
       default: "",
     },
   },
+  emits: ["update:modelValue", "change"],
+  data() {
+    const base = createUid("js-radio");
+    return {
+      generatedId: base,
+      errorId: `${base}-err`,
+      hintId: `${base}-hint`,
+    };
+  },
   computed: {
-    inputVal: {
-      get() {
-        return this.value;
-      },
-      set(val) {
-        this.$emit("input", val);
-      },
+    fieldId() {
+      return this.id || this.generatedId;
     },
-    fieldID() {
-      return this.id || `js-in-${this._uid}`;
+    resolvedName() {
+      return this.name || this.generatedId;
+    },
+    isInvalid() {
+      return Boolean(this.invalid || this.error);
+    },
+    describedBy() {
+      if (this.error) return this.errorId;
+      if (this.hint || this.tip) return this.hintId;
+      return "";
+    },
+    shouldParseLabel() {
+      if (typeof this.parseMarkdown === "boolean") return this.parseMarkdown;
+      const pm = String(this.parseMarkdown || "");
+      return pm === "*" || pm.includes("label");
     },
   },
   methods: {
-    onChange() {
-      this.$emit("onChange", this.uid);
+    dotStyle(radio) {
+      if (!this.dots) return undefined;
+      const style = {};
+      if (radio.color) style.backgroundColor = radio.color;
+      if (radio.img) style.backgroundImage = `url("${radio.img}")`;
+      return style;
+    },
+    onSelect(val, event) {
+      this.$emit("update:modelValue", val);
+      this.$emit("change", this.uid !== undefined ? this.uid : val, event);
     },
   },
 };
 </script>
-<style lang="scss">
+
+<style scoped>
 .js-input-radio {
-  position: relative;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--js-space-1);
+  font-family: var(--js-font-family);
+  color: var(--js-color-text);
+}
+
+.js-input-radio__legend {
+  padding: 0;
+  margin-bottom: var(--js-space-1);
+  font-size: var(--js-font-size-sm);
+  font-weight: 600;
+  color: var(--js-color-text);
+}
+
+.js-input-radio__list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--js-space-2) var(--js-space-4);
+  padding: var(--js-space-2) var(--js-space-3);
+  border: 1px solid var(--js-color-border-strong);
+  border-radius: var(--js-radius-sm);
+  background-color: var(--js-color-surface);
+}
+
+.js-input-radio__list--dots {
+  justify-content: flex-start;
+  gap: var(--js-space-3);
+  border-color: transparent;
+  background-color: transparent;
+  padding: var(--js-space-1) 0;
+}
+
+.js-input-radio__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+  font-size: var(--js-font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.js-input-radio__option--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.js-input-radio__native {
+  width: 1.1em;
+  height: 1.1em;
+  margin: 0;
+  accent-color: var(--js-color-primary);
+  cursor: inherit;
+  flex-shrink: 0;
+}
+
+.js-input-radio__native:focus-visible {
+  outline: var(--js-focus-ring);
+  outline-offset: var(--js-focus-offset);
+}
+
+/* Swatch / Dot radio style */
+.js-input-radio__native--dot {
+  appearance: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 2px solid var(--js-color-border-strong);
+  background-color: var(--js-color-surface);
+  background-size: cover;
+  background-position: center;
+  transition: transform var(--js-transition-fast),
+    box-shadow var(--js-transition-fast);
+}
+
+.js-input-radio__native--dot:hover:not(:disabled) {
+  transform: scale(1.06);
+}
+
+.js-input-radio__native--dot:checked {
+  border-color: var(--js-color-text);
+  box-shadow: 0 0 0 2px var(--js-color-surface),
+    0 0 0 4px var(--js-color-primary);
+}
+
+.js-input-radio__error {
   display: flex;
   align-items: center;
-  gap: 0.5em;
-  min-width: 0;
-  &.js-input-radio-label-top {
-    flex-direction: column;
-    align-items: flex-start;
-    align-items: stretch;
-    gap: 0.25em;
-    > .label {
-      font-size: 0.85em;
-    }
-  }
-  &.js-input-label-placeholder {
-    margin-top: 1.5em;
-    > .label {
-      position: absolute;
-      top: 0;
-      left: 0.5em;
-      opacity: 0;
-      &.label-show {
-        opacity: 1;
-        top: -1.6em;
-        left: 0;
-        font-size: 0.85em;
-      }
-    }
-  }
-  > .label {
-    align-items: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-weight: 500;
-    transition: all 0.35s;
-    strong {
-      font-weight: bolder;
-    }
-    .tag {
-      color: #fff;
-      background: #2783a8;
-    }
-    &.label-wrap {
-      white-space: wrap;
-    }
-  }
-  > .item {
-    flex: 1;
-    display: flex;
-    transition: all 0.35s;
-    gap: 0.35em;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    border-radius: 0.25em;
-    border: none;
-    font-family: inherit;
-    text-align: left;
-    padding: 0.15em 0;
-    color: darken(#2783a8, 15%);
-    font-weight: 600;
-    font-size: 1em;
-    min-width: 0;
-    position: relative;
-    outline: none;
-    .input {
-      flex: 1;
-      .input-field {
-        border: none;
-        outline: none;
-        font-size: 0.9em;
-        padding: 0.15em 0;
-        background: transparent;
-        width: 100%;
-      }
-    }
-    .dots {
-      display: flex;
-      gap: 0.1em;
-      width: 100%;
-      justify-content: space-evenly;
-      label {
-        font-family: system-ui, sans-serif;
-        font-size: 2.3rem;
-        font-weight: bold;
-        line-height: 1.1;
-        display: grid;
-        grid-template-columns: 1em auto;
-        width: 1em;
-        height: 1em;
-        border-radius: 50%;
-        &:focus-within {
-          color: red;
-        }
-        &:hover {
-          box-shadow: 0px 0px 4px 0px #0000005c;
-        }
-        input {
-          appearance: none;
-          /* For iOS < 15 to remove gradient background */
-          background-color: #fff;
-          /* Not removed via appearance */
-          margin: 0;
-          font: inherit;
-          color: currentColor;
-          cursor: pointer;
-          width: 1em;
-          height: 1em;
-          border-radius: 50%;
-          // transform: translateY(-0.075em);
-          display: grid;
-          place-content: center;
-          transition: 120ms transform ease-in-out;
-          background-size: 90%;
-          background-position: center;
-        }
-        input:checked {
-          // transform: scale(1);
-          box-shadow: inset 0 0 0 0.075em #333;
-          &:before {
-            content: "";
-            width: 0.25em;
-            height: 0.25em;
-            border-radius: 50%;
-            // box-shadow: inset 1em 1em #fff;
-          }
-        }
-      }
-    }
-    .label {
-      font-size: 0.9em;
-    }
+  gap: 0.35rem;
+  margin: 0;
+  font-size: var(--js-font-size-xs);
+  font-weight: 600;
+  color: var(--js-color-danger);
+}
 
-    &:focus {
-      background: rgba(255, 255, 255, 1);
-      background: #e1effc;
-    }
-    &.tip {
-      &:after {
-        content: attr(data-tip);
-        text-transform: initial;
-        position: absolute;
-        z-index: 999;
-        transform: translate(0, 100%);
-        padding: 0.1em 0.35em;
-        border-radius: 0.25em;
-        background: #333;
-        font-size: 0.85rem;
-        font-weight: 500;
-        color: #fff;
-        text-align: center;
-        white-space: nowrap;
-        display: none;
-      }
-      &:hover:not(:focus):after {
-        display: block;
-      }
-    }
-    &.tip-tr:after,
-    &.tip-tl:after {
-      top: -0.25em;
-      transform: translate(0, -100%);
-    }
-    &.tip-br:after,
-    &.tip-bl:after {
-      bottom: -0.25em;
-      transform: translate(0, 100%);
-    }
-    &.tip-tr:after {
-      right: 0;
-    }
-    &.tip-tl:after {
-      left: 0;
-    }
-    &.tip-br:after {
-      right: 0;
-    }
-    &.tip-bl:after {
-      left: 0;
-    }
-    &.tip-l:after {
-      left: -0.25em;
-      top: 50%;
-      transform: translate(-100%, -50%);
-    }
-    &.tip-r:after {
-      right: -0.25em;
-      top: 50%;
-      transform: translate(100%, -50%);
-    }
-    &.tip-t:after {
-      left: 50%;
-      top: -0.25em;
-      transform: translate(-50%, -100%);
-    }
-    &.tip-b:after {
-      left: 50%;
-      bottom: -0.25em;
-      transform: translate(-50%, 100%);
-    }
-  }
-  &.js-input-radio-label-invalid:not(:focus-within) {
-    > .item {
-      box-shadow: inset 0 0 0 1px red;
-      .act {
-        color: red;
-      }
-    }
-  }
-  &.js-input-radio-xs {
-    > .item {
-      gap: 0.5em;
+.js-input-radio__hint {
+  margin: 0;
+  font-size: var(--js-font-size-xs);
+  color: var(--js-color-text-muted);
+}
 
-      font-size: 0.8em;
-      font-weight: 500;
-      padding: 0.15em 0.35em;
-      .thumb {
-        width: 2em;
-        border-radius: 0.1em;
-        &.thumb-x2 {
-          width: 3.5em;
-        }
-      }
-    }
-  }
-  &.js-input-radio-sm {
-    > .item {
-      font-size: 0.85em;
-      gap: 0.5em;
-      .thumb {
-        width: 2.4em;
-        border-radius: 0.1em;
-        &.thumb-x2 {
-          width: 3.6em;
-        }
-      }
-    }
-  }
-  &.js-input-radio-lg {
-    > .item {
-      font-size: 1.15em;
-      .thumb {
-        width: 3.8em;
-        &.thumb-x2 {
-          width: 4.8em;
-        }
-      }
-    }
-  }
-  &.js-input-radio-xl {
-    > .item {
-      font-size: 1.35em;
-      /* border-radius: 100px; */
-      .sub-label {
-        font-size: 0.75em;
-      }
-      .thumb {
-        width: 4.8em;
-        &.thumb-x2 {
-          width: 5.8em;
-        }
-      }
-    }
-  }
-  &.js-input-radio-disabled {
-    > .item {
-      cursor: not-allowed;
-      color: #fff;
-      background: #bbb;
-      &:hover,
-      &:active,
-      &:focus,
-      &.item-active {
-        background: #aaa;
-      }
-      .tag {
-        background: #bbb;
-        color: #ccc;
-      }
-      .icn {
-        color: #fff;
-      }
-    }
-  }
+.js-input-radio--invalid .js-input-radio__list {
+  border-color: var(--js-color-danger);
+}
+
+.js-input-radio--disabled .js-input-radio__list {
+  background-color: var(--js-color-disabled-bg);
+  color: var(--js-color-disabled-text);
+}
+
+/* Sizes */
+.js-input-radio--sm .js-input-radio__option {
+  font-size: var(--js-font-size-xs);
+}
+
+.js-input-radio--lg .js-input-radio__option {
+  font-size: var(--js-font-size-md);
+}
+
+.js-input-radio--xl .js-input-radio__option {
+  font-size: var(--js-font-size-lg);
+}
+
+/* Dark theme */
+.js-input-radio--dark,
+.js-input-radio--dark .js-input-radio__legend {
+  color: var(--js-color-text-inverse);
+}
+
+.js-input-radio--dark .js-input-radio__list:not(.js-input-radio__list--dots) {
+  background-color: var(--js-color-surface-dark);
+  border-color: var(--js-color-divider-dark);
+  color: var(--js-color-text-inverse);
+}
+
+.js-input-radio--dark .js-input-radio__hint {
+  color: var(--js-color-text-inverse-muted);
 }
 </style>
