@@ -13,7 +13,7 @@ This document tracks the full 3-step plan to modernize the forked Vue 2 ExploreL
 | **Step 2B** | Interactive Navigation & Dropdown System (`JsPanelNavItem`, `JsBtnSplit`, `JsNavList`, `JsDrop`) | **Complete** |
 | **Step 2C** | Layout, Panels & Data Display (`JsPanel`, `JsPanelNav`, `JsTitleBar`, `JsTable`) | **Complete** |
 | **Step 2D** | Form Controls & Multi-Step Form (`JsInput`, `JsInputCheckbox`, `JsInputRadio`, `JsForm`) | **Complete** |
-| **Step 3** | Configure npm Package, Exports, Consumer Smoke Tests, `LICENSE`, `README.md`, & Publish Readiness | **Next (Ready to Execute)** |
+| **Step 3** | Configure npm Package, Exports, Consumer Smoke Tests, `LICENSE`, `README.md`, & Publish Readiness | **Complete (Ready for `v0.1.0` Publish)** |
 
 ---
 
