@@ -35,7 +35,8 @@
       :target="isExternal ? '_blank' : undefined"
       :rel="isExternal ? 'noopener noreferrer' : undefined"
       :aria-current="isActive && resolvedTag !== 'button' ? 'page' : undefined"
-      :aria-haspopup="hasDropdown ? 'menu' : undefined"
+      :role="itemRole || undefined"
+      :aria-haspopup="hasDropdown ? (isDropTabs ? 'true' : 'menu') : undefined"
       :aria-expanded="hasDropdown ? String(dropdownOpen) : undefined"
       :aria-controls="hasDropdown ? dropdownId : undefined"
       @click="onTriggerClick"
@@ -105,8 +106,8 @@
         { 'js-nav-item__drop--scrollable': !hasNestedDropdowns },
         { 'js-nav-item__drop--child': child },
       ]"
-      role="menu"
-      :aria-label="item.label ? `${item.label} menu` : 'Submenu'"
+      :role="isDropTabs ? 'region' : undefined"
+      :aria-label="isDropTabs ? (item.label ? `${item.label} menu` : 'Submenu') : undefined"
     >
       <slot name="dropdown" :items="item.items" :close="closeDropdown">
         <JsTabs
@@ -119,11 +120,15 @@
           :aria-label="item.label ? `${item.label} tabs` : 'Menu tabs'"
         >
           <template #panel="{ item: tab }">
-            <ul class="js-nav-item__menu-list" role="none">
+            <ul
+              class="js-nav-item__menu-list"
+              role="menu"
+              :aria-label="tab.label ? `${tab.label} menu` : 'Submenu'"
+            >
               <li
                 v-for="(sub, idx) in tab.items || []"
                 :key="sub.id || idx"
-                :role="sub.divider ? 'separator' : sub.header ? 'presentation' : 'none'"
+                :role="sub.header ? 'presentation' : 'none'"
                 class="js-nav-item__menu-entry"
               >
                 <span v-if="sub.header" class="js-nav-item__menu-header">
@@ -136,6 +141,7 @@
                 <JsNavItem
                   v-else
                   :item="childItemProps(sub)"
+                  item-role="menuitem"
                   :child="true"
                   :block="true"
                   :size="sub.size || 'sm'"
@@ -150,11 +156,16 @@
           </template>
         </JsTabs>
 
-        <ul v-else class="js-nav-item__menu-list" role="none">
+        <ul
+          v-else
+          class="js-nav-item__menu-list"
+          role="menu"
+          :aria-label="item.label ? `${item.label} menu` : 'Submenu'"
+        >
           <li
             v-for="(sub, idx) in item.items"
             :key="sub.id || idx"
-            :role="sub.divider ? 'separator' : sub.header ? 'presentation' : 'none'"
+            :role="sub.header ? 'presentation' : 'none'"
             class="js-nav-item__menu-entry"
           >
             <span v-if="sub.header" class="js-nav-item__menu-header">
@@ -167,6 +178,7 @@
             <JsNavItem
               v-else
               :item="childItemProps(sub)"
+              item-role="menuitem"
               :child="true"
               :block="true"
               :size="sub.size || 'sm'"
@@ -250,6 +262,10 @@ export default {
     child: {
       type: Boolean,
       default: false,
+    },
+    itemRole: {
+      type: String,
+      default: "",
     },
     disabled: {
       type: Boolean,

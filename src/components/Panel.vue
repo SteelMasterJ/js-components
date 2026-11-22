@@ -104,6 +104,11 @@
     <div class="js-panel__content-wrap">
       <div
         ref="contentRef"
+        :tabindex="isScrollableContainer ? 0 : undefined"
+        :role="isScrollableContainer ? 'region' : undefined"
+        :aria-label="
+          isScrollableContainer ? title || 'Scrollable panel content' : undefined
+        "
         :class="[
           'js-panel__content',
           'js-panel__content--' + height,
@@ -454,6 +459,9 @@ export default {
         this.footer && (this.footer.ext === "_blank" || this.footer.linkExt)
       );
     },
+    isScrollableContainer() {
+      return Boolean(this.scroll && this.height !== "auto");
+    },
     showScrollDown() {
       return (
         this.scrollHint &&
@@ -787,6 +795,11 @@ export default {
   padding: var(--js-space-4);
   scroll-behavior: smooth;
   overflow: auto;
+}
+
+.js-panel__content:focus-visible {
+  outline: var(--js-focus-ring);
+  outline-offset: -2px;
 }
 
 .js-panel__content--sm {

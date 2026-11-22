@@ -29,6 +29,10 @@ describe("JsPanel", () => {
     expect(wrapper.find('[data-test="panel-svg"]').exists()).toBe(true);
     const footerLink = wrapper.find("footer a");
     expect(footerLink.attributes("rel")).toBe("noopener noreferrer");
+
+    const scrollRegion = wrapper.find(".js-panel__content");
+    expect(scrollRegion.attributes("tabindex")).toBe("0");
+    expect(scrollRegion.attributes("role")).toBe("region");
   });
 });
 

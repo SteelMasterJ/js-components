@@ -2,7 +2,7 @@
   <div :class="['js-nav-list', 'js-nav-list--' + theme]">
     <ul
       :class="['js-nav-list__items', { 'js-nav-list__items--scroll': shouldScroll }]"
-      :role="menu ? 'menu' : undefined"
+      :role="isMenuRole ? 'menu' : undefined"
       :aria-label="ariaLabel || undefined"
     >
       <li
@@ -41,6 +41,7 @@
         <slot v-else name="item" :item="subItem" :index="i">
           <JsNavItem
             :class="{ 'js-nav-list__thumb': Boolean(subItem.thumb) }"
+            :item-role="isMenuRole ? 'menuitem' : ''"
             :child="true"
             :block="true"
             :size="subItem.size || size"
@@ -111,6 +112,14 @@ export default {
   },
   emits: ["select", "click"],
   computed: {
+    hasNonMenuWidgets() {
+      return this.items.some(
+        (item) => Boolean((item.split && Array.isArray(item.items)) || item.component)
+      );
+    },
+    isMenuRole() {
+      return Boolean(this.menu && !this.hasNonMenuWidgets);
+    },
     hasNestedItems() {
       return this.items.some(
         (item) => Array.isArray(item.items) && item.items.length > 0 && !item.split
@@ -122,8 +131,7 @@ export default {
   },
   methods: {
     itemRole(subItem) {
-      if (!this.menu) return undefined;
-      if (subItem.divider) return "separator";
+      if (!this.isMenuRole) return undefined;
       if (subItem.header) return "presentation";
       return "none";
     },

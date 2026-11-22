@@ -52,7 +52,7 @@ describe("JsBtnSplit", () => {
 });
 
 describe("JsNavList", () => {
-  it("renders headers, semantic <hr> dividers, custom components, and async JsBtnSplit", async () => {
+  it("omits role=menu when mixed widgets (custom component / JsBtnSplit) are present and emits select", async () => {
     const wrapper = mount(JsNavList, {
       props: {
         menu: true,
@@ -74,13 +74,29 @@ describe("JsNavList", () => {
     });
 
     await flushPromises();
-    expect(wrapper.find('ul[role="menu"]').exists()).toBe(true);
+    expect(wrapper.find('ul[role="menu"]').exists()).toBe(false);
     expect(wrapper.find("hr.js-nav-list__divider").exists()).toBe(true);
     expect(wrapper.find("strong").text()).toBe("Custom");
     expect(wrapper.find('[role="group"]').exists()).toBe(true);
 
     await wrapper.find("button").trigger("click");
     expect(wrapper.emitted("select")).toHaveLength(1);
+  });
+
+  it("assigns role=menu and child role=menuitem for pure menu lists (Axe aria-required-children)", () => {
+    const wrapper = mount(JsNavList, {
+      props: {
+        menu: true,
+        items: [
+          { label: "Edit", button: "button" },
+          { divider: true },
+          { label: "Docs", linkExt: "https://vuejs.org" },
+        ],
+      },
+    });
+
+    expect(wrapper.find('ul[role="menu"]').exists()).toBe(true);
+    expect(wrapper.findAll('[role="menuitem"]')).toHaveLength(2);
   });
 });
 

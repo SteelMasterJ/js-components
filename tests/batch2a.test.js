@@ -234,7 +234,8 @@ describe("JsNavItem", () => {
 
     await trigger.trigger("click");
     expect(trigger.attributes("aria-expanded")).toBe("true");
-    expect(wrapper.find('[role="menu"]').exists()).toBe(true);
+    expect(wrapper.find('ul[role="menu"]').exists()).toBe(true);
+    expect(wrapper.findAll('[role="menuitem"]')).toHaveLength(2);
     expect(wrapper.find("hr").exists()).toBe(true);
 
     await wrapper.trigger("keydown", { key: "Escape" });
@@ -300,7 +301,7 @@ describe("JsNavItem", () => {
     });
 
     await wrapper.find("button").trigger("click");
-    const dropEl = wrapper.find('[role="menu"]').element;
+    const dropEl = wrapper.find(".js-nav-item__drop").element;
     vi.spyOn(dropEl, "getBoundingClientRect").mockReturnValue({
       top: 565,
       bottom: 785,
@@ -312,7 +313,7 @@ describe("JsNavItem", () => {
 
     window.dispatchEvent(new Event("resize"));
     await wrapper.vm.$nextTick();
-    expect(wrapper.find('[role="menu"]').classes()).toContain("js-nav-item__drop--above");
+    expect(wrapper.find(".js-nav-item__drop").classes()).toContain("js-nav-item__drop--above");
 
     Object.defineProperty(window, "innerHeight", { value: origHeight, configurable: true });
   });
