@@ -257,28 +257,65 @@ npm run pack:check
 
 Publishing public packages to **npmjs.com** is completely free. Because `"publishConfig": { "access": "public" }` and `"prepublishOnly": "npm test && npm run build"` are configured in `package.json`, tests and builds always run automatically before publishing.
 
-### Option A — Manual Publish from Your Terminal
+### 1. Prepare & Bump the Version
 
-1. Create a free account on [npmjs.com](https://www.npmjs.com/) (if you don't already have one) with username matching the package scope (`steelmasterj`), then log in once:
+1. Make sure your working tree is clean and all feature changes are committed:
+   ```bash
+   git status
+   ```
+2. Run tests, build the bundle, and verify the tarball contents:
+   ```bash
+   npm test
+   npm run build
+   npm run pack:check
+   ```
+3. Bump the package version using Semantic Versioning (`npm version` automatically updates `package.json` and `package-lock.json`, creates a version commit, and creates a matching `vX.Y.Z` git tag):
+   ```bash
+   # Bug fixes / small tweaks (e.g. 0.1.0 -> 0.1.1)
+   npm version patch
+
+   # New backwards-compatible components or features (e.g. 0.1.0 -> 0.2.0)
+   npm version minor
+
+   # Breaking API changes (e.g. 0.1.0 -> 1.0.0)
+   npm version major
+   ```
+4. Push the commits and version tag to GitHub:
+   ```bash
+   git push --follow-tags
+   ```
+
+### 2. Publish to npm
+
+#### Option A — Manual Publish from Your Terminal
+
+1. Log in to [npmjs.com](https://www.npmjs.com/) once (with an account matching the `@steelmasterj` scope):
    ```bash
    npm login
    ```
-2. Verify the tarball contents before publishing:
-   ```bash
-   npm run pack:check
-   ```
-3. Publish `v0.1.0` (or bump future versions with `npm version patch|minor|major`):
+2. Publish the bumped version (`prepublishOnly` automatically runs `npm test && npm run build`):
    ```bash
    npm publish --access public
    ```
 
-### Option B — Automated Publish via GitHub Actions (Free for Public Repos)
+#### Option B — Automated Publish via GitHub Actions (Free for Public Repos)
 
-This repository includes `.github/workflows/publish.yml`, which automatically runs `npm test`, `npm run build`, and `npm publish --provenance --access public` whenever you publish a **GitHub Release** (or trigger the workflow manually from the Actions tab):
+This repository includes [`.github/workflows/publish.yml`](./.github/workflows/publish.yml), which automatically runs `npm ci`, `npm test`, `npm run build`, and `npm publish --provenance --access public` whenever you publish a **GitHub Release** (or trigger the workflow manually from the **Actions** tab):
 
-1. On [npmjs.com](https://www.npmjs.com/), create a **Granular Access Token** with **Read and write** permission for `@steelmasterj/js-components`.
-2. In your GitHub repo go to **Settings → Secrets and variables → Actions → New repository secret**, name it `NPM_TOKEN`, and paste the token.
-3. Bump the version (`npm version patch|minor|major`), push commits and tags (`git push --follow-tags`), and create a **GitHub Release** for that tag.
+1. **One-time setup**: On [npmjs.com](https://www.npmjs.com/), create a **Granular Access Token** with **Read and write** permission for `@steelmasterj/js-components`. In your GitHub repo, go to **Settings → Secrets and variables → Actions → New repository secret**, name it `NPM_TOKEN`, and paste the token.
+2. **Every release**: After running `npm version patch|minor|major` and `git push --follow-tags`, go to **Releases → Draft a new release**, select the newly pushed tag (e.g. `v0.1.1`), and click **Publish release**.
+
+### 3. Verify & Update Consuming Apps
+
+Confirm the new version is live on npm and update any host apps using the library:
+
+```bash
+# Check latest published version on npm
+npm view @steelmasterj/js-components version
+
+# Update a consuming project to the latest release
+npm install @steelmasterj/js-components@latest
+```
 
 ---
 
