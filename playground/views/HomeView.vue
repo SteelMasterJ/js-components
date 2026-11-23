@@ -27,6 +27,7 @@ import DemoJsTabs from "../components/demos/DemoJsTabs.vue";
 import DemoJsIcon from "../components/demos/DemoJsIcon.vue";
 import DemoJsAlert from "../components/demos/DemoJsAlert.vue";
 import DemoJsToast from "../components/demos/DemoJsToast.vue";
+import DemoJsAccordion from "../components/demos/DemoJsAccordion.vue";
 
 const directoryItems = computed(() =>
   COMPONENT_DOCS.map((doc) => ({
@@ -155,6 +156,12 @@ const sections = [
     slug: "js-toast",
     demo: DemoJsToast,
   },
+  {
+    id: "accordion-heading",
+    title: "20. JsAccordion (Bordered, Separated & Flush Variants, Multi-Expand, Keyboard Nav & Dark Theme)",
+    slug: "js-accordion",
+    demo: DemoJsAccordion,
+  },
 ];
 </script>
 
@@ -163,7 +170,7 @@ const sections = [
     <JsTitleBar
       :heading-level="1"
       title="js-components Playground"
-      sub-title="Living Documentation & All-in-One Interactive Showcase (24 Components)"
+      sub-title="Living Documentation & All-in-One Interactive Showcase (25 Components)"
       description="Explore every @steelmasterj/js-components primitive on one page below, or open any dedicated component page for its full prop reference, accessibility notes, and variation suite."
       background="#ffffff"
       :buttons="[
@@ -186,7 +193,7 @@ const sections = [
       id="directory"
       as="section"
       :heading-level="2"
-      title="Component Directory (All 24 Exports)"
+      title="Component Directory (All 25 Exports)"
       icon="list-ul"
       :scroll="false"
       height="auto"

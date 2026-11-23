@@ -20,6 +20,7 @@ const EXPECTED_COMPONENTS = [
   "JsNavList",
   "JsDrop",
   "JsPanel",
+  "JsAccordion",
   "JsPanelNav",
   "JsTitleBar",
   "JsTable",
@@ -34,7 +35,7 @@ const EXPECTED_COMPONENTS = [
 const EXPECTED_UTILS = ["toast"];
 
 describe("Package Exports & Plugin Registration", () => {
-  it("exports all 24 named Vue 3 components and utilities with matching names", () => {
+  it("exports all 25 named Vue 3 components and utilities with matching names", () => {
     const exportedNames = Object.keys(NamedExports).filter(
       (key) => key !== "default"
     );
@@ -53,7 +54,7 @@ describe("Package Exports & Plugin Registration", () => {
     }
   });
 
-  it("registers all 24 components globally via app.use(JsComponents)", () => {
+  it("registers all 25 components globally via app.use(JsComponents)", () => {
     expect(typeof JsComponents.install).toBe("function");
 
     const app = createApp({});

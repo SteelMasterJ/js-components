@@ -15,6 +15,7 @@ import JsBtnSplit from "./components/BtnSplit.vue";
 import JsNavList from "./components/NavList.vue";
 import JsDrop from "./components/Drop.vue";
 import JsPanel from "./components/Panel.vue";
+import JsAccordion from "./components/Accordion.vue";
 import JsPanelNav from "./components/PanelNav.vue";
 import JsTitleBar from "./components/TitleBar.vue";
 import JsTable from "./components/Table.vue";
@@ -42,6 +43,7 @@ const components = {
   JsNavList,
   JsDrop,
   JsPanel,
+  JsAccordion,
   JsPanelNav,
   JsTitleBar,
   JsTable,
@@ -69,6 +71,7 @@ export {
   JsNavList,
   JsDrop,
   JsPanel,
+  JsAccordion,
   JsPanelNav,
   JsTitleBar,
   JsTable,

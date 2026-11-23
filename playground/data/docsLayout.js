@@ -1,10 +1,12 @@
 import { markRaw } from "vue";
 import {
+  JsAccordion,
   JsPanel,
   JsPanelNav,
   JsTable,
   JsTitleBar,
 } from "@steelmasterj/js-components";
+import DemoJsAccordion from "../components/demos/DemoJsAccordion.vue";
 import DemoJsPanel from "../components/demos/DemoJsPanel.vue";
 import DemoJsPanelNav from "../components/demos/DemoJsPanelNav.vue";
 import DemoJsTitleBar from "../components/demos/DemoJsTitleBar.vue";
@@ -81,6 +83,58 @@ export const layoutDocs = [
       { name: "subActions", scope: "—", description: "Secondary toolbar strip directly below the header." },
       { name: "default", scope: "—", description: "Main panel body content." },
       { name: "footer", scope: "—", description: "Custom footer content." },
+    ],
+  },
+  {
+    slug: "js-accordion",
+    name: "JsAccordion",
+    category: "layout",
+    categoryLabel: "Layout & Data",
+    icon: "chevron-down",
+    summary: "WAI-ARIA disclosure accordion with single/multi expand, keyboard navigation, and 3 variants.",
+    description:
+      "JsAccordion renders a vertically stacked set of collapsible sections using semantic headings (configurable headingLevel) and native <button type='button'> triggers linked to role='region' panels. Supports single or multiple open panels, controlled v-model or uncontrolled mode, bordered/separated/flush variants, light and dark themes, sizes, markdown, and named or scoped panel slots.",
+    accessibilityNotes: [
+      "Implements the WAI-ARIA Authoring Practices Accordion pattern with `aria-expanded`, `aria-controls`, `role='region'`, and `aria-labelledby`.",
+      "Supports `ArrowDown`, `ArrowUp`, `Home`, and `End` focus movement across enabled header buttons while keeping all buttons in the natural Tab order.",
+      "Chevron rotation and hover transitions honor `prefers-reduced-motion: reduce` and `--js-touch-min` targets.",
+    ],
+    component: markRaw(JsAccordion),
+    demoComponent: markRaw(DemoJsAccordion),
+    importSnippet: `import { JsAccordion } from "@steelmasterj/js-components";`,
+    usageSnippet: `<JsAccordion v-model="openId" :heading-level="3" :items="[
+  { id: 'overview', label: 'Overview', icon: 'info-circle' },
+  { id: 'details', label: 'Details', badge: 2 },
+]">
+  <template #item-overview>Overview content</template>
+  <template #item-details>Detailed information</template>
+</JsAccordion>`,
+    propDocs: {
+      items: { values: "Array<{ id?, label, subLabel?, content?, icon?, badge?, disabled?, open? }>", description: "Accordion section definitions array." },
+      modelValue: { values: "String | Number | Array | undefined", description: "Controlled open item id/index (single mode) or array of ids/indices (multiple mode)." },
+      multiple: { values: "true | false", description: "Allows multiple accordion panels to remain open simultaneously." },
+      collapsible: { values: "true | false", description: "When false, prevents collapsing the last open panel." },
+      headingLevel: { values: "1 – 6", description: "Semantic heading tag level (h1–h6) wrapping each header button." },
+      variant: { values: "bordered | separated | flush", description: "Container visual style: connected box, separated cards, or edge-to-edge dividers." },
+      size: { values: "sm | md | lg", description: "Header and panel padding and typography scale." },
+      theme: { values: "light | dark", description: "Light or dark surface palette." },
+      chevronPosition: { values: "right | left", description: "Places the expand/collapse chevron indicator on the trailing or leading edge." },
+      parseMarkdown: { values: "Boolean | String", description: "Enables JsMarkdown formatting inside item labels, subLabels, and fallback content." },
+      ariaLabel: { values: "String", description: "Optional accessible label applied to the outer accordion container." },
+    },
+    emitDocs: {
+      "update:modelValue": { payload: "String | Number | null | Array", description: "Emitted with the next open key(s) for v-model binding." },
+      change: { payload: "{ value, openKeys }", description: "Emitted whenever the set of open panels changes." },
+      toggle: { payload: "{ item, index, open, value }", description: "Emitted when an item is toggled open or closed." },
+      open: { payload: "{ item, index, value }", description: "Emitted when an item transitions to open." },
+      close: { payload: "{ item, index, value }", description: "Emitted when an item transitions to closed." },
+    },
+    slots: [
+      { name: "item-icon", scope: "{ item, index, open }", description: "Custom leading icon per accordion header." },
+      { name: "item-label", scope: "{ item, index, open }", description: "Custom label markup inside each accordion trigger." },
+      { name: "chevron", scope: "{ item, index, open }", description: "Custom expand/collapse indicator icon." },
+      { name: "item-<id> / item<index>", scope: "{ item, index, open, toggle }", description: "Dedicated content slot for a specific accordion panel." },
+      { name: "panel", scope: "{ item, index, open, toggle }", description: "Fallback scoped slot for any panel without a dedicated named slot." },
     ],
   },
   {

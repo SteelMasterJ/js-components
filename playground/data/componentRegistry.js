@@ -23,7 +23,7 @@ export const COMPONENT_CATEGORIES = [
     label: "Layout & Data",
     shortLabel: "Layout",
     icon: "table-cells",
-    description: "Semantic panels, searchable directories, page headers, and data tables.",
+    description: "Semantic panels, collapsible accordions, searchable directories, page headers, and data tables.",
   },
   {
     id: "forms",

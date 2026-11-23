@@ -4,7 +4,7 @@ A lightweight, WCAG 2.1 AA accessible, responsive **Vue 3** component library bu
 
 ## Highlights
 
-- **24 production-ready Vue 3 components** covering buttons/navigation, dropdowns, modals, tabs, panels, data tables, feedback alerts/toasts, and multi-step forms.
+- **25 production-ready Vue 3 components** covering buttons/navigation, dropdowns, modals, tabs, panels, accordions, data tables, feedback alerts/toasts, and multi-step forms.
 - **Zero lock-in**: pure vanilla scoped CSS with `--js-*` custom properties (no Sass, Bootstrap, Tailwind, or `!important`), built-in minimal inline SVG chrome icons (no FontAwesome), and optional `vue-router` support.
 - **Accessible by default (WCAG 2.1 AA)**: semantic HTML landmarks, keyboard navigation (`Escape`, `Tab` focus traps, roving `tabindex`, arrow keys), ARIA combobox/listbox/dialog/tablist patterns, accessible touch targets, and `prefers-reduced-motion` support.
 - **Responsive & SSR-safe**: fluid layouts down to 320px viewports with viewport-aware dropdown flipping and guarded browser listeners (`window`, `document`, `ResizeObserver`).
@@ -81,7 +81,7 @@ export default {
 
 ### Global Plugin Registration
 
-If you prefer having all 24 components globally available without per-file imports:
+If you prefer having all 25 components globally available without per-file imports:
 
 ```js
 import { createApp } from "vue";
@@ -183,7 +183,7 @@ Pass any inline `<svg>` into `JsIcon`'s default slot or into component icon slot
 
 ---
 
-## Component Reference (24 Components)
+## Component Reference (25 Components)
 
 ### Foundation & Feedback
 
@@ -220,6 +220,7 @@ Pass any inline `<svg>` into `JsIcon`'s default slot or into component icon slot
 | Component | Purpose | Key Props | Emits | Slots |
 | :--- | :--- | :--- | :--- | :--- |
 | **`JsPanel`** | Semantic container card (`section`/`article`/`div`/`aside`) with hero background image zoom, keyboard-accessible scroll region with scroll-nudge buttons, primary overlay action, caption, and footer. | `as`, `headingLevel`, `title`, `titleTestId`, `titleDark`, `titleSize`, `aboveNote`, `banner`, `bannerDark`, `notify`, `notifyDark`, `footer`, `icon`, `img`, `imgAlt`, `titleBackgroundTransparent`, `parseMarkdown`, `height` (`sm`/`md`/`lg`/`xl`/`auto`), `scroll`, `compact`, `scrollbars`, `scrollHint`, `backgroundImage`, `backgroundImagePadded`, `backgroundImageCentered`, `backgroundImageShadeTop`, `backgroundImageZoom`, `backgroundColor`, `backgroundImageSize`, `backgroundPositionLeft`, `backgroundPositionRight`, `primaryAction`, `primaryActionHover`, `primaryActionCoverLink`, `caption`, `span` | `action-click` | `default`, `above`, `header`, `icon`, `headerLeft`, `headerRight`, `subActions`, `footer` |
+| **`JsAccordion`** | WAI-ARIA disclosure accordion with configurable `headingLevel`, single/multiple expand `v-model`, `ArrowUp`/`ArrowDown`/`Home`/`End` keyboard navigation, `bordered`/`separated`/`flush` variants, and light/dark themes. | `items`, `modelValue`, `multiple`, `collapsible`, `headingLevel`, `variant` (`bordered`/`separated`/`flush`), `size` (`sm`/`md`/`lg`), `theme` (`light`/`dark`), `chevronPosition` (`right`/`left`), `parseMarkdown`, `ariaLabel` | `update:modelValue`, `change`, `toggle`, `open`, `close` | `item-icon`, `item-label`, `chevron`, `item-<id>`, `item<index>`, `panel` |
 | **`JsPanelNav`** | Searchable, groupable navigation grid/list with live match count (`<output aria-live="polite">`), list/thumb view switcher, and `itemsLimit` Load All toggle. | `ariaLabel`, `menu`, `menuConfig`, `grouped`, `search`, `searchMinCount`, `searchableProperties`, `columns`, `itemUnits`, `items`, `itemsLimit`, `loadAllLabel`, `parseMarkdown`, `groupBy`, `groupLabelsHidden`, `groupLabelsLeft`, `groupLabelShowCount`, `grid`, `layout`, `layoutGap`, `emptySize`, `layoutRight`, `layoutCompact`, `size`, `theme`, `circle`, `thumb`, `splitGrow`, `dropRight`, `dropTabs`, `dropSize`, `dropTheme` | `click`, `select`, `search`, `config-change` | `empty` |
 | **`JsTitleBar`** | Semantic page `<header>` with `<nav aria-label="Breadcrumb"><ol>`, configurable heading level, dropdown switcher title, page actions, and optional status banner. | `headingLevel`, `title`, `subTitle`, `label`, `subLabel`, `icon`, `description`, `img`, `imgAlt`, `background`, `buttons`, `bannerLabel`, `bannerButtons`, `bannerBackground`, `bannerBackgroundDark`, `bannerIcon`, `buttonSize`, `parseMarkdown`, `crumbs`, `drop`, `dropTabs`, `dropTabSelected`, `dropSize`, `dropTheme`, `dark` | — | `default`, `icon`, `actions`, `banner-icon` |
 | **`JsTable`** | Semantic `<table>` with `<caption>`, `<th scope="col|row">`, keyboard-focusable horizontal scroll region, sticky left/right columns, interactive cells, and dark/striped/hover styles. | `caption`, `ariaLabel`, `rows`, `parseMarkdown`, `padding` (`sm`/`md`/`lg`), `headerRowCount`, `headerColCount`, `colWidths`, `leftColSticky`, `rightColSticky`, `scroll`, `striped`, `hover`, `hLines`, `vLines`, `dark`, `wrapHeaders` | `cell-click` | `header-cell`, `cell` |

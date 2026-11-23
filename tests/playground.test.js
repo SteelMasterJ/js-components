@@ -40,7 +40,7 @@ describe("Living Documentation Registry & Prop Introspection", () => {
     expect(names.size).toBe(EXPORTED_COMPONENTS.length);
   });
 
-  it("documents 100% of live Vue Options API props on all 24 components", () => {
+  it("documents 100% of live Vue Options API props on all 25 components", () => {
     for (const doc of COMPONENT_DOCS) {
       const declaredProps = Object.keys(doc.component.props || {});
       const rows = buildPropRows(doc.component, doc.propDocs);
@@ -126,7 +126,7 @@ describe("Playground Living Docs App, Navbar & Routing", () => {
     wrapper.unmount();
   });
 
-  it("navigates to and renders every one of the 24 component pages with zero Vue warnings", async () => {
+  it("navigates to and renders every one of the 25 component pages with zero Vue warnings", async () => {
     const router = createPlaygroundRouter(createMemoryHistory());
     await router.push("/");
     await router.isReady();
