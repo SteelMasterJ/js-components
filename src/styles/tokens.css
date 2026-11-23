@@ -22,14 +22,43 @@
   --js-color-divider-dark: rgba(255, 255, 255, 0.16);
 
   /* Semantic / Status Colors (AA contrast with white text unless noted) */
+  --js-color-info: #1d6f90;
+  --js-color-info-soft: #e6f3f8;
+  --js-color-info-border: #7bb8d1;
+  --js-color-info-text: #124b63;
+  --js-color-info-dark-bg: #162d38;
+  --js-color-info-dark-border: #2e6e8a;
+  --js-color-info-dark-text: #ccebf7;
+
   --js-color-success: #1e7e34;
   --js-color-success-hover: #155d27;
+  --js-color-success-soft: #eaf6ee;
+  --js-color-success-border: #7cc492;
+  --js-color-success-text: #145523;
+  --js-color-success-dark-bg: #142e1c;
+  --js-color-success-dark-border: #2e7d45;
+  --js-color-success-dark-text: #c8f0d4;
+
   --js-color-warning: #f5c518;
   --js-color-warning-text: #1f2933;
+  --js-color-warning-soft: #fef7dc;
+  --js-color-warning-border: #d9a404;
+  --js-color-warning-text-strong: #6b4c00;
+  --js-color-warning-dark-bg: #33290c;
+  --js-color-warning-dark-border: #9e7a0e;
+  --js-color-warning-dark-text: #fce89a;
+
   --js-color-orange: #a64b00;
   --js-color-orange-hover: #823b00;
   --js-color-danger: #c5221f;
   --js-color-danger-hover: #961a18;
+  --js-color-danger-soft: #fdf2f2;
+  --js-color-danger-border: #e28b8a;
+  --js-color-danger-text: #961a18;
+  --js-color-danger-dark-bg: #381616;
+  --js-color-danger-dark-border: #a63230;
+  --js-color-danger-dark-text: #f9c9c8;
+
   --js-color-purple: #7b3896;
   --js-color-purple-hover: #5c2871;
   --js-color-disabled-bg: #e4e7eb;
@@ -73,6 +102,7 @@
   --js-z-dropdown: 100;
   --js-z-tooltip: 200;
   --js-z-modal: 1000;
+  --js-z-toast: 1100;
 
   /* Motion */
   --js-transition-fast: 150ms ease;

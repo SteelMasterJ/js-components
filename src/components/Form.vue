@@ -4,18 +4,29 @@
     :novalidate="novalidate"
     @submit.prevent="handleSubmit"
   >
-    <div
+    <JsAlert
+      v-if="status"
+      class="js-form__status"
+      :type="status.type || 'info'"
+      :variant="status.variant || 'soft'"
+      :theme="theme"
+      :title="status.title || ''"
+      :message="status.message || ''"
+      :icon="status.icon || ''"
+      :dismissible="Boolean(status.dismissible)"
+      :parse-markdown="parseMarkdown"
+      @dismiss="$emit('dismiss-status')"
+    />
+
+    <JsAlert
       v-if="errors.length"
       ref="errorSummaryRef"
       class="js-form__errors"
-      role="alert"
-      aria-live="assertive"
+      type="danger"
+      :theme="theme"
+      :title="`Please fix the following ${errors.length === 1 ? 'issue' : 'issues'}:`"
       tabindex="-1"
     >
-      <p class="js-form__errors-title">
-        <JsIcon name="alert" />
-        <span>Please fix the following {{ errors.length === 1 ? "issue" : "issues" }}:</span>
-      </p>
       <ul class="js-form__errors-list">
         <li v-for="(err, idx) in errors" :key="err.fieldId || idx">
           <a
@@ -27,7 +38,7 @@
           </a>
         </li>
       </ul>
-    </div>
+    </JsAlert>
 
     <header v-if="activeStepMeta && (activeStepMeta.label || totalSteps > 1)" class="js-form__header">
       <div class="js-form__step-bar">
@@ -89,6 +100,21 @@
                 :parse="Boolean(items[idx].parseMarkdown || parseMarkdown)"
               />
             </div>
+
+            <JsAlert
+              v-else-if="items[idx].type === 'alert'"
+              :type="items[idx].alertType || items[idx].status || 'info'"
+              :variant="items[idx].variant || 'soft'"
+              :theme="items[idx].theme || theme"
+              :size="items[idx].size === 'sm' ? 'sm' : 'md'"
+              :title="items[idx].title || ''"
+              :message="items[idx].message || items[idx].label || ''"
+              :icon="items[idx].icon || ''"
+              :hide-icon="Boolean(items[idx].hideIcon)"
+              :dismissible="Boolean(items[idx].dismissible)"
+              :parse-markdown="items[idx].parseMarkdown || parseMarkdown"
+              @dismiss="items[idx].hide = true"
+            />
 
             <component
               :is="items[idx].component"
@@ -210,6 +236,7 @@
 </template>
 
 <script>
+import JsAlert from "./Alert.vue";
 import JsIcon from "./Icon.vue";
 import JsMarkdown from "./Markdown.vue";
 import JsNavItem from "./NavItem.vue";
@@ -224,6 +251,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default {
   name: "JsForm",
   components: {
+    JsAlert,
     JsIcon,
     JsMarkdown,
     JsNavItem,
@@ -287,8 +315,19 @@ export default {
       type: [Boolean, String],
       default: "",
     },
+    status: {
+      type: Object,
+      default: null,
+    },
   },
-  emits: ["update:modelValue", "submit", "reset", "step-change", "change"],
+  emits: [
+    "update:modelValue",
+    "submit",
+    "reset",
+    "step-change",
+    "change",
+    "dismiss-status",
+  ],
   data() {
     return {
       formUid: createUid("js-form"),
@@ -342,7 +381,7 @@ export default {
   methods: {
     snapshotDefaults() {
       this.defaultValues = this.items.map((item) => {
-        if (item.header) return undefined;
+        if (item.header || item.type === "alert") return undefined;
         return Array.isArray(item.value) ? [...item.value] : item.value;
       });
     },
@@ -404,7 +443,7 @@ export default {
 
       for (const idx of indices) {
         const item = this.items[idx];
-        if (!item || item.header || item.hide || item.disabled) continue;
+        if (!item || item.header || item.type === "alert" || item.hide || item.disabled) continue;
 
         item.invalid = false;
         item.error = "";
@@ -499,7 +538,7 @@ export default {
     reset() {
       this.errors = [];
       this.items.forEach((item, idx) => {
-        if (item.header) return;
+        if (item.header || item.type === "alert") return;
         item.invalid = false;
         item.error = "";
         const def = this.defaultValues[idx];
@@ -516,7 +555,7 @@ export default {
       }
       this.submitting = true;
       const payload = this.items
-        .filter((item) => !item.header)
+        .filter((item) => !item.header && item.type !== "alert")
         .map((item) => ({
           name: item.name,
           value: item.value,
@@ -540,28 +579,6 @@ export default {
   width: 100%;
   font-family: var(--js-font-family);
   color: var(--js-color-text);
-}
-
-.js-form__errors {
-  padding: var(--js-space-3) var(--js-space-4);
-  border: 1px solid var(--js-color-danger);
-  border-radius: var(--js-radius-md);
-  background-color: #fdf2f2;
-  color: var(--js-color-danger);
-}
-
-.js-form__errors:focus-visible {
-  outline: var(--js-focus-ring);
-  outline-offset: var(--js-focus-offset);
-}
-
-.js-form__errors-title {
-  display: flex;
-  align-items: center;
-  gap: var(--js-space-2);
-  margin: 0 0 var(--js-space-2);
-  font-size: var(--js-font-size-sm);
-  font-weight: 700;
 }
 
 .js-form__errors-list {

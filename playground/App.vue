@@ -1272,6 +1272,10 @@
         <span class="pg-chip"><JsIcon name="chevron-right" /> chevron-right</span>
         <span class="pg-chip"><JsIcon name="caret-down" /> caret-down</span>
         <span class="pg-chip"><JsIcon name="check" color="#1e7e34" /> check (colored)</span>
+        <span class="pg-chip"><JsIcon name="info-circle" color="#1d6f90" /> info-circle</span>
+        <span class="pg-chip"><JsIcon name="check-circle" color="#1e7e34" /> check-circle</span>
+        <span class="pg-chip"><JsIcon name="warning-triangle" color="#a64b00" /> warning-triangle</span>
+        <span class="pg-chip"><JsIcon name="danger-circle" color="#c5221f" /> danger-circle</span>
         <span class="pg-chip"><JsIcon name="alert" color="#c5221f" /> alert</span>
         <span class="pg-chip"><JsIcon name="bell" /> bell</span>
         <span class="pg-chip"><JsIcon name="external" /> external</span>
@@ -1289,12 +1293,201 @@
         </span>
       </div>
     </section>
+
+    <!-- 18. JsAlert -->
+    <section class="pg-section" aria-labelledby="alert-heading">
+      <h2 id="alert-heading">
+        18. JsAlert (Semantic States, Distinct SVG Icons, Variants &amp; Dismissible)
+      </h2>
+      <div class="pg-stack">
+        <div class="pg-card">
+          <h3>All 4 Semantic States (Soft Default)</h3>
+          <div class="pg-stack">
+            <JsAlert
+              type="info"
+              title="Information"
+              message="A new version of `@steelmasterj/js-components` is available."
+              :parse-markdown="true"
+            />
+            <JsAlert
+              type="success"
+              title="Changes Saved"
+              message="Your workspace configuration has been updated."
+            />
+            <JsAlert
+              type="warning"
+              title="Storage Almost Full"
+              message="You are using 90% of your allocated quota."
+            />
+            <JsAlert
+              type="danger"
+              title="Deployment Failed"
+              message="Unable to reach the build server. Please try again."
+            />
+          </div>
+        </div>
+
+        <div class="pg-card">
+          <h3>Solid &amp; Outline Variants + Actions &amp; Custom Icon Slots</h3>
+          <div class="pg-stack">
+            <JsAlert
+              type="success"
+              variant="solid"
+              title="Solid Success Banner"
+              message="High-emphasis feedback with accessible contrast."
+            />
+            <JsAlert
+              type="warning"
+              variant="outline"
+              title="Outline Warning with JsNavItem Action"
+              message="Review pending permissions before continuing."
+            >
+              <template #actions="{ dismiss }">
+                <JsNavItem
+                  size="xs"
+                  theme="orange"
+                  :item="{ label: 'Acknowledge', button: 'button', onClick: dismiss }"
+                />
+              </template>
+            </JsAlert>
+            <JsAlert
+              v-model="alertDismissibleOpen"
+              type="info"
+              :dismissible="true"
+              title="Dismissible Alert (Custom SVG Icon)"
+              message="Click the close button to dismiss, or reset below."
+            >
+              <template #icon>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              </template>
+            </JsAlert>
+            <div v-if="!alertDismissibleOpen">
+              <JsNavItem
+                size="sm"
+                theme="light"
+                :item="{ label: 'Restore Dismissible Alert', button: 'button', onClick: () => { alertDismissibleOpen = true; } }"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="pg-card pg-dark-card">
+          <h3>Dark Theme Alerts</h3>
+          <div class="pg-stack">
+            <JsAlert
+              type="info"
+              theme="dark"
+              title="Dark Info"
+              message="AA-compliant contrast on dark surfaces."
+            />
+            <JsAlert
+              type="danger"
+              theme="dark"
+              variant="outline"
+              title="Dark Outline Danger"
+              message="Session expired. Sign in again to continue."
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 19. JsToast -->
+    <section class="pg-section" aria-labelledby="toast-heading">
+      <h2 id="toast-heading">
+        19. JsToast (Programmatic &amp; Declarative Snackbar Composing JsAlert)
+      </h2>
+      <div class="pg-stack">
+        <div class="pg-card">
+          <h3>Programmatic Queue (`toast.info / success / warning / danger`)</h3>
+          <div class="pg-row" style="margin-bottom: 0.75rem;">
+            <JsNavItem
+              size="sm"
+              theme="blue"
+              :item="{ label: 'Trigger Info', icon: 'info-circle', button: 'button' }"
+              @click="triggerDemoToast('info')"
+            />
+            <JsNavItem
+              size="sm"
+              theme="green"
+              :item="{ label: 'Trigger Success', icon: 'check-circle', button: 'button' }"
+              @click="triggerDemoToast('success')"
+            />
+            <JsNavItem
+              size="sm"
+              theme="orange"
+              :item="{ label: 'Trigger Warning', icon: 'warning-triangle', button: 'button' }"
+              @click="triggerDemoToast('warning')"
+            />
+            <JsNavItem
+              size="sm"
+              theme="purple"
+              :item="{ label: 'Trigger Danger', icon: 'danger-circle', button: 'button' }"
+              @click="triggerDemoToast('danger')"
+            />
+            <JsNavItem
+              size="sm"
+              theme="dark"
+              :item="{ label: 'Manual Dismiss Only', button: 'button' }"
+              @click="triggerPersistentToast"
+            />
+            <JsNavItem
+              size="sm"
+              theme="light"
+              :item="{ label: 'With Undo Action', button: 'button' }"
+              @click="triggerUndoToast"
+            />
+            <JsNavItem
+              size="sm"
+              theme="light"
+              :item="{ label: 'Clear All', button: 'button' }"
+              @click="clearToasts"
+            />
+          </div>
+
+          <div class="pg-row">
+            <JsInput
+              v-model="toastPosition"
+              type="select"
+              label="Toast Position"
+              size="sm"
+              :items="toastPositionOptions"
+            />
+          </div>
+        </div>
+
+        <div class="pg-card">
+          <h3>Declarative v-model Snackbar</h3>
+          <div class="pg-row">
+            <JsNavItem
+              size="sm"
+              theme="lightblue"
+              :item="{ label: singleSnackbarOpen ? 'Hide Snackbar' : 'Show v-model Snackbar', button: 'button' }"
+              @click="singleSnackbarOpen = !singleSnackbarOpen"
+            />
+          </div>
+        </div>
+      </div>
+
+      <JsToast :position="toastPosition" />
+      <JsToast
+        v-model="singleSnackbarOpen"
+        type="success"
+        position="bottom-center"
+        :auto-dismiss="false"
+        title="Declarative Snackbar"
+        message="Controlled directly with v-model and manual dismiss."
+      />
+    </section>
   </main>
 </template>
 
 <script>
 import { markRaw } from "vue";
 import JsMarkdown from "../src/components/Markdown.vue";
+import { toast } from "../src/utils/toast.js";
 
 export default {
   name: "PlaygroundApp",
@@ -1636,8 +1829,26 @@ export default {
             placeholder: "Optional details...",
             value: "",
           },
+          {
+            type: "alert",
+            alertType: "info",
+            title: "Inline Form Alert",
+            message: "Schema items with `type: 'alert'` render JsAlert directly inside a step without affecting submission data.",
+            parseMarkdown: true,
+          },
         ],
       },
+      alertDismissibleOpen: true,
+      singleSnackbarOpen: false,
+      toastPosition: "bottom-center",
+      toastPositionOptions: [
+        { label: "Top Right", value: "top-right" },
+        { label: "Top Center", value: "top-center" },
+        { label: "Top Left", value: "top-left" },
+        { label: "Bottom Right", value: "bottom-right" },
+        { label: "Bottom Center", value: "bottom-center" },
+        { label: "Bottom Left", value: "bottom-left" },
+      ],
     };
   },
   methods: {
@@ -1656,6 +1867,38 @@ export default {
     },
     onFormSubmit(payload) {
       this.formSubmittedPayload = payload;
+      toast.success("Form payload captured successfully.", {
+        title: "Form Submitted",
+      });
+    },
+    triggerDemoToast(type) {
+      const copy = {
+        info: { title: "Info", message: "Auto-dismisses in 5s (hover or focus to pause)." },
+        success: { title: "Success", message: "Profile preferences saved." },
+        warning: { title: "Warning", message: "API rate limit is at 85%." },
+        danger: { title: "Error", message: "Could not sync changes to remote." },
+      };
+      toast[type](copy[type].message, { title: copy[type].title });
+    },
+    triggerPersistentToast() {
+      toast.info("This snackbar stays open until manually dismissed.", {
+        title: "Manual Dismiss",
+        duration: 0,
+      });
+    },
+    triggerUndoToast() {
+      const id = toast.warning("Archived 3 items.", {
+        title: "Action Required",
+        duration: 7000,
+        actionLabel: "Undo",
+        onAction: () => {
+          toast.dismiss(id);
+          toast.success("Archive undone!");
+        },
+      });
+    },
+    clearToasts() {
+      toast.clear();
     },
   },
 };

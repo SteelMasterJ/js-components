@@ -22,6 +22,9 @@ import JsInput from "./components/Input.vue";
 import JsInputCheckbox from "./components/InputCheckbox.vue";
 import JsInputRadio from "./components/InputRadio.vue";
 import JsForm from "./components/Form.vue";
+import JsAlert from "./components/Alert.vue";
+import JsToast from "./components/Toast.vue";
+import { toast } from "./utils/toast.js";
 
 const components = {
   JsIcon,
@@ -46,6 +49,8 @@ const components = {
   JsInputCheckbox,
   JsInputRadio,
   JsForm,
+  JsAlert,
+  JsToast,
 };
 
 export {
@@ -71,6 +76,9 @@ export {
   JsInputCheckbox,
   JsInputRadio,
   JsForm,
+  JsAlert,
+  JsToast,
+  toast,
 };
 
 export default {

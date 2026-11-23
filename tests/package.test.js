@@ -27,23 +27,33 @@ const EXPECTED_COMPONENTS = [
   "JsInputCheckbox",
   "JsInputRadio",
   "JsForm",
+  "JsAlert",
+  "JsToast",
 ];
 
+const EXPECTED_UTILS = ["toast"];
+
 describe("Package Exports & Plugin Registration", () => {
-  it("exports all 22 named Vue 3 components with matching component names", () => {
+  it("exports all 24 named Vue 3 components and utilities with matching names", () => {
     const exportedNames = Object.keys(NamedExports).filter(
       (key) => key !== "default"
     );
-    expect(exportedNames.sort()).toEqual([...EXPECTED_COMPONENTS].sort());
+    expect(exportedNames.sort()).toEqual(
+      [...EXPECTED_COMPONENTS, ...EXPECTED_UTILS].sort()
+    );
 
     for (const name of EXPECTED_COMPONENTS) {
       const comp = NamedExports[name];
       expect(comp, `${name} should be exported`).toBeTruthy();
       expect(comp.name).toBe(name);
     }
+
+    for (const utilName of ["show", "info", "success", "warning", "danger", "dismiss", "clear"]) {
+      expect(typeof NamedExports.toast[utilName]).toBe("function");
+    }
   });
 
-  it("registers all 22 components globally via app.use(JsComponents)", () => {
+  it("registers all 24 components globally via app.use(JsComponents)", () => {
     expect(typeof JsComponents.install).toBe("function");
 
     const app = createApp({});

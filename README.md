@@ -4,7 +4,7 @@ A lightweight, WCAG 2.1 AA accessible, responsive **Vue 3** component library bu
 
 ## Highlights
 
-- **22 production-ready Vue 3 components** covering buttons/navigation, dropdowns, modals, tabs, panels, data tables, and multi-step forms.
+- **24 production-ready Vue 3 components** covering buttons/navigation, dropdowns, modals, tabs, panels, data tables, feedback alerts/toasts, and multi-step forms.
 - **Zero lock-in**: pure vanilla scoped CSS with `--js-*` custom properties (no Sass, Bootstrap, Tailwind, or `!important`), built-in minimal inline SVG chrome icons (no FontAwesome), and optional `vue-router` support.
 - **Accessible by default (WCAG 2.1 AA)**: semantic HTML landmarks, keyboard navigation (`Escape`, `Tab` focus traps, roving `tabindex`, arrow keys), ARIA combobox/listbox/dialog/tablist patterns, accessible touch targets, and `prefers-reduced-motion` support.
 - **Responsive & SSR-safe**: fluid layouts down to 320px viewports with viewport-aware dropdown flipping and guarded browser listeners (`window`, `document`, `ResizeObserver`).
@@ -81,7 +81,7 @@ export default {
 
 ### Global Plugin Registration
 
-If you prefer having all 22 components globally available without per-file imports:
+If you prefer having all 24 components globally available without per-file imports:
 
 ```js
 import { createApp } from "vue";
@@ -123,11 +123,16 @@ All components consume `--js-*` design tokens defined in `@steelmasterj/js-compo
   --js-color-border-strong: #8c959f;
 
   /* Semantic accents */
+  --js-color-info: #1d6f90;
   --js-color-success: #1e7e34;
   --js-color-warning: #f5c518;
   --js-color-orange: #a64b00;
   --js-color-danger: #c5221f;
   --js-color-purple: #7b3896;
+
+  /* Z-index layers */
+  --js-z-modal: 1000;
+  --js-z-toast: 1100;
 
   /* Focus ring */
   --js-color-focus: #005fcc;
@@ -160,7 +165,7 @@ Touch targets automatically expand (`--js-touch-min: 2.75rem`) on `@media (point
 | :--- | :--- |
 | **Directional** | `chevron-down`, `chevron-up`, `chevron-left`, `chevron-right`, `angle-down`, `angle-up`, `angle-left`, `angle-right`, `caret-down`, `caret-right` |
 | **Actions & UI** | `close`, `times`, `search`, `check`, `external`, `external-link-square-alt`, `ellipsis-vertical`, `spinner` |
-| **Status & Views** | `alert`, `triangle-exclamation`, `bell`, `list-ul`, `table-cells` |
+| **Status & Views** | `alert`, `triangle-exclamation`, `warning-triangle`, `info-circle`, `check-circle`, `danger-circle`, `x-circle`, `bell`, `list-ul`, `table-cells` |
 
 ### Passing Custom Raw SVGs
 
@@ -178,16 +183,20 @@ Pass any inline `<svg>` into `JsIcon`'s default slot or into component icon slot
 
 ---
 
-## Component Reference (22 Components)
+## Component Reference (24 Components)
 
-### Foundation
+### Foundation & Feedback
 
 | Component | Purpose | Key Props | Emits | Slots |
 | :--- | :--- | :--- | :--- | :--- |
 | **`JsIcon`** | Inline SVG icon primitive with optional accessible `role="img"` label and spin animation. | `name`, `iconClass`, `color`, `label`, `spin` | — | `default` |
 | **`JsMarkdown`** | XSS-safe inline rich text (`**bold**`, `_italic_`, safe `[links](url)`, and WCAG AA tags like `bl[Info]`, `gn[Active]`, `rd[Alert]`, `[Tag]`). | `val`, `parse`, `showTitle`, `textTestId` | — | — |
+| **`JsAlert`** | Inline semantic feedback banner (`info`/`success`/`warning`/`danger`) with distinct built-in SVG icons, `soft`/`solid`/`outline` variants, light/dark themes, and optional dismiss button. | `modelValue`, `type`, `variant`, `theme`, `size`, `title`, `message`, `icon`, `hideIcon`, `dismissible`, `closeLabel`, `parseMarkdown`, `role`, `ariaLive` | `update:modelValue`, `dismiss` | `default`, `title`, `icon`, `actions`, `close-icon` |
+| **`JsToast`** | Teleported snackbar/toast notification queue composing `JsAlert` with auto-dismiss (pauses on hover/focus), manual dismiss (`duration: 0` or `autoDismiss: false`), Escape key dismissal, and declarative `v-model` or programmatic `toast` helper support. | `modelValue`, `items`, `type`, `title`, `message`, `variant`, `icon`, `hideIcon`, `actionLabel`, `parseMarkdown`, `position`, `duration`, `autoDismiss`, `dismissible`, `pauseOnHover`, `showProgress`, `maxVisible`, `theme`, `ariaLabel`, `closeLabel`, `teleportTo`, `disableTeleport` | `update:modelValue`, `update:items`, `dismiss`, `action` | `default`, `actions` |
 | **`JsModal`** | Teleported WAI-ARIA dialog with focus trap, focus restoration, Escape/backdrop dismissal, and body scroll lock. | `modelValue`, `title`, `ariaLabel`, `headingLevel`, `size` (`sm`/`md`/`lg`/`full`), `closeOnBackdrop`, `closeOnEsc`, `hideClose`, `closeLabel`, `component`, `componentProps`, `teleportTo`, `disableTeleport` | `update:modelValue`, `open`, `close` | `default`, `header`, `footer`, `close-icon` |
 | **`JsTabs`** | WAI-ARIA `tablist`/`tab`/`tabpanel` with `v-model`, roving `tabindex`, and `ArrowLeft`/`ArrowRight`/`Home`/`End` keyboard navigation. | `items`, `modelValue`, `size` (`sm`/`md`/`lg`), `theme` (`light`/`dark`), `align` (`start`/`center`/`stretch`), `parseMarkdown`, `ariaLabel` | `update:modelValue`, `change` | `tab-icon`, `tab-label`, `tab-<id>`, `tab<index>`, `panel` |
+
+> **Programmatic Toasts:** Mount `<JsToast />` once in your root layout, then call `toast.success("Saved!")`, `toast.info(...)`, `toast.warning(...)`, `toast.danger(...)`, `toast.dismiss(id)`, or `toast.clear()` anywhere in your app (imported from `@steelmasterj/js-components`). Pass `duration: 0` for a persistent manual-dismiss snackbar.
 
 ### Navigation & Menus
 
@@ -222,7 +231,7 @@ Pass any inline `<svg>` into `JsIcon`'s default slot or into component icon slot
 | **`JsInput`** | Unified text, email, number, textarea, autocomplete combobox, and custom WAI-ARIA Select-Only Combobox (`type="select"`) with `$attrs` forwarding, floating labels, adornments, and `role="alert"` errors. | `uid`, `modelValue`, `type`, `step`, `rows`, `items`, `id`, `label`, `labelTop`, `labelPlaceholder`, `placeholder`, `icon`, `iconColor`, `actionIcon`, `img`, `imgAlt`, `imgSize`, `hint`, `tip`, `invalid`, `error`, `errorIcon`, `size` (`xs`–`xl`), `disabled`, `autoFocus`, `labelWrap`, `theme` (`light`/`dark`), `parseMarkdown`, `dropRight`, `dropSize`, `dropTheme`, `notifyCount`, `notifyTip`, `notifyLabel`, `notifyIcon`, `notifyUnits`, `notifyColor`, `searchableProperties` | `update:modelValue`, `change`, `select`, `focus`, `blur` | `icon`, `prefix`, `suffix`, `action` |
 | **`JsInputCheckbox`** | Semantic `<fieldset>`/`<legend>` multi-checkbox group with responsive column layouts, or single boolean checkbox when `items` is empty. | `uid`, `modelValue`, `items`, `id`, `label`, `icon`, `iconColor`, `hint`, `tip`, `invalid`, `error`, `errorIcon`, `size` (`xs`–`xl`), `notifyCount`, `notifyTip`, `notifyLabel`, `notifyIcon`, `notifyUnits`, `notifyColor`, `disabled`, `labelWrap`, `layout`, `theme` (`light`/`dark`), `parseMarkdown` | `update:modelValue`, `change` | `icon` |
 | **`JsInputRadio`** | Semantic `<fieldset>`/`<legend>` radio group plus accessible color/image swatch `dots` mode with screen-reader labels. | `uid`, `modelValue`, `name`, `dots`, `items`, `id`, `label`, `hint`, `tip`, `invalid`, `error`, `errorIcon`, `size` (`xs`–`xl`), `disabled`, `labelWrap`, `theme` (`light`/`dark`), `parseMarkdown` | `update:modelValue`, `change` | — |
-| **`JsForm`** | Single- or multi-step schema-driven wizard with step indicator (`aria-current="step"`), clickable validation error summary, conditional `show`/`hide` field actions, 12-column responsive grid, and reset. | `modelValue` (`{ steps, items, buttons }`), `buttonsSticky`, `size` (`xs`–`xl`), `submitButtonLabel`, `nextButtonLabel`, `backButtonLabel`, `resetButtonLabel`, `resetButton`, `resetOnSubmit`, `novalidate`, `theme` (`light`/`dark`), `parseMarkdown` | `update:modelValue`, `submit`, `reset`, `step-change`, `change` | — |
+| **`JsForm`** | Single- or multi-step schema-driven wizard with step indicator (`aria-current="step"`), `JsAlert`-powered clickable validation error summary, inline `type: "alert"` notices, `status` banner, conditional `show`/`hide` field actions, 12-column responsive grid, and reset. | `modelValue` (`{ steps, items, buttons }`), `status`, `buttonsSticky`, `size` (`xs`–`xl`), `submitButtonLabel`, `nextButtonLabel`, `backButtonLabel`, `resetButtonLabel`, `resetButton`, `resetOnSubmit`, `novalidate`, `theme` (`light`/`dark`), `parseMarkdown` | `update:modelValue`, `submit`, `reset`, `step-change`, `change`, `dismiss-status` | — |
 
 ---
 
