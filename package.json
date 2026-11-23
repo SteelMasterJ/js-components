@@ -1,6 +1,6 @@
 {
   "name": "@steelmasterj/js-components",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Lightweight, WCAG 2.1 AA accessible, responsive Vue 3 component library.",
   "author": "Joseph Steel",
   "license": "MIT",
