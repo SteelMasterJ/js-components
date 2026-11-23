@@ -1,0 +1,14 @@
+:root {
+  /* Site-level layout & documentation tokens */
+  --site-max-width: 74rem;
+  --site-gutter: clamp(0.75rem, 3vw, 1.75rem);
+  --site-header-height: 4rem;
+  --site-section-gap: 1.5rem;
+  --site-code-bg: #1e242b;
+  --site-code-text: #eef3f8;
+  --site-code-border: #343d48;
+
+  /* Typography & surface refinement */
+  --js-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+}

@@ -29,8 +29,7 @@
             :is="crumbTag(crumb)"
             v-else
             class="js-title-bar__crumb-link"
-            :to="crumbTag(crumb) === 'router-link' ? crumbTarget(crumb) : undefined"
-            :href="crumbTag(crumb) === 'a' ? crumbTarget(crumb) : undefined"
+            v-bind="crumbLinkAttrs(crumb)"
             :target="crumb.linkExt ? '_blank' : undefined"
             :rel="crumb.linkExt ? 'noopener noreferrer' : undefined"
           >
@@ -298,6 +297,13 @@ export default {
         to: crumb.link || crumb.route || null,
         href: crumb.linkExt || null,
       });
+    },
+    crumbLinkAttrs(crumb) {
+      const tag = this.crumbTag(crumb);
+      const target = this.crumbTarget(crumb);
+      if (tag === "router-link") return { to: target };
+      if (tag === "a" && target) return { href: target };
+      return {};
     },
   },
 };

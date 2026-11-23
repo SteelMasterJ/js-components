@@ -30,11 +30,9 @@
       :disabled="resolvedTag === 'button' ? isDisabled : undefined"
       :aria-disabled="resolvedTag !== 'button' && isDisabled ? 'true' : undefined"
       :tabindex="resolvedTag !== 'button' && isDisabled ? -1 : undefined"
-      :href="resolvedHref"
-      :to="resolvedTag === 'router-link' ? resolvedTo : undefined"
       :target="isExternal ? '_blank' : undefined"
       :rel="isExternal ? 'noopener noreferrer' : undefined"
-      :aria-current="isActive && resolvedTag !== 'button' ? 'page' : undefined"
+      v-bind="triggerLinkAttrs"
       :role="itemRole || undefined"
       :aria-haspopup="hasDropdown ? (isDropTabs ? 'true' : 'menu') : undefined"
       :aria-expanded="hasDropdown ? String(dropdownOpen) : undefined"
@@ -446,6 +444,18 @@ export default {
         return this.resolvedTo;
       }
       return undefined;
+    },
+    triggerLinkAttrs() {
+      const attrs = {};
+      if (this.resolvedTag === "router-link") {
+        attrs.to = this.resolvedTo;
+      } else if (this.resolvedTag === "a" && this.resolvedHref) {
+        attrs.href = this.resolvedHref;
+      }
+      if (this.isActive && this.resolvedTag !== "button") {
+        attrs["aria-current"] = "page";
+      }
+      return attrs;
     },
     hasTags() {
       return Boolean(

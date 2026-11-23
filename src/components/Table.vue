@@ -55,12 +55,7 @@
                 :is="cellTag(norm(cell))"
                 :class="cellClasses(norm(cell))"
                 :title="norm(cell).tip || undefined"
-                :to="
-                  cellTag(norm(cell)) === 'router-link'
-                    ? norm(cell).route
-                    : undefined
-                "
-                :href="cellHref(norm(cell))"
+                v-bind="cellLinkAttrs(norm(cell))"
                 :target="norm(cell).linkExt ? '_blank' : undefined"
                 :rel="norm(cell).linkExt ? 'noopener noreferrer' : undefined"
                 :type="cellTag(norm(cell)) === 'button' ? 'button' : undefined"
@@ -124,12 +119,7 @@
                 :is="cellTag(norm(cell))"
                 :class="cellClasses(norm(cell))"
                 :title="norm(cell).tip || undefined"
-                :to="
-                  cellTag(norm(cell)) === 'router-link'
-                    ? norm(cell).route
-                    : undefined
-                "
-                :href="cellHref(norm(cell))"
+                v-bind="cellLinkAttrs(norm(cell))"
                 :target="norm(cell).linkExt ? '_blank' : undefined"
                 :rel="norm(cell).linkExt ? 'noopener noreferrer' : undefined"
                 :type="cellTag(norm(cell)) === 'button' ? 'button' : undefined"
@@ -286,6 +276,13 @@ export default {
       const tag = this.cellTag(cell);
       if (tag !== "a") return undefined;
       return cell.linkExt || cell.link || cell.route || undefined;
+    },
+    cellLinkAttrs(cell) {
+      const tag = this.cellTag(cell);
+      if (tag === "router-link") return { to: cell.route };
+      const href = this.cellHref(cell);
+      if (tag === "a" && href) return { href };
+      return {};
     },
     cellClasses(cell) {
       return [
